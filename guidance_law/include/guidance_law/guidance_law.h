@@ -66,7 +66,8 @@ namespace oaguider{
                         void Eigen2Poly(vector<Eigen::Vector3d> &traj);
                         void simplifyToSevenPoints(vector<Eigen::Vector3d> &traj);
                       
-                        bool  calcGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3d> &DTraj, vector<Eigen::Vector3d> &TTraj);
+                        bool  calcPNGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3d> &DTraj, vector<Eigen::Vector3d> &TTraj);
+                        bool  calcCBFGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3d> &DTraj, vector<Eigen::Vector3d> &TTraj);
         };
 
 }

@@ -25,6 +25,7 @@ vehicle::vehicle( std::string _role,  States state)
 }
 
 vehicle::~vehicle(){}
+
 void vehicle::init(std::string _role,  States state){
         role = _role;
         veh_states.pos = state.pos;

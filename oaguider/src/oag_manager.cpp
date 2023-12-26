@@ -47,7 +47,7 @@ namespace oaguider{
 
                 vector<Eigen::Vector3d>  DTraj, TTraj;
                 //guide_law_->calcGuideTraj(guide_law_->Drone, guide_law_->Target, guide_law_->droneTraj_, guide_law_->targetTraj_);
-                if (temp_guider.calcGuideTraj(drone, target, DTraj, TTraj))
+                if (temp_guider.calcPNGuideTraj(drone, target, DTraj, TTraj))
                         return true;
                 else{
                         return false;
