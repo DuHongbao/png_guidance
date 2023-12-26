@@ -12,3 +12,25 @@ target_observer 实现基于视觉的目标位置估计与速度估算；       
           该段轨迹推向上一次采样获取的轨迹;     可能需要转化成B样条全局优化；
 4.      回顾B样条曲线，思考在该工程中的作用；
 5.      写目标状态估计的功能包，包括位置估计与速度估计； 
+
+
+
+
+sudo apt update  
+sudo apt install git
+
+git config --global user.name "Your Name"  
+git config --global user.email "your-email@example.com"
+
+mkdir myproject  
+cd myproject
+
+git init
+
+git add .
+
+git commit -m "Initial commit"
+
+git remote add origin https://github.com/your-username/repository-name.git
+
+git push -u origin master
