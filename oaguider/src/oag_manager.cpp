@@ -17,9 +17,18 @@ namespace oaguider{
                 
                 local_data_.traj_id_ = 0;
                 visualization_ =vis;
+
+                States drone,target;
+                std::string droneID = "drone509"; 
+                std::string targetID = "paperTiger";
+
                 guide_law_.reset(new GuidanceLaw);
+                guide_law_->init(droneID, targetID, drone, target);
+                //guide_law_->setID(droneID, targetID );
+                //guide_law_->setVeh(drone, target);
                 guide_law_->setParam(nh);
 
+                visualization_ = vis;
         }
 
         //2
@@ -36,6 +45,9 @@ namespace oaguider{
         //3
         bool OAGManager::guideGlobalTraj(const Eigen::Vector3d &start_pos, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
                                          const Eigen::Vector3d &end_pos, const Eigen::Vector3d &end_vel, const Eigen::Vector3d &end_acc){
+                vector<Eigen::Vector3d> points;
+                points.push_back(start_pos);
+                points.push_back(end_pos);
 
                 States DState(start_pos, start_vel, start_acc);
                 States TState(end_pos, end_vel, end_acc);
@@ -47,9 +59,21 @@ namespace oaguider{
 
                 vector<Eigen::Vector3d>  DTraj, TTraj;
                 //guide_law_->calcGuideTraj(guide_law_->Drone, guide_law_->Target, guide_law_->droneTraj_, guide_law_->targetTraj_);
-                if (temp_guider.calcPNGuideTraj(drone, target, DTraj, TTraj))
+                if (temp_guider.calcPNGuideTraj(drone, target, DTraj, TTraj)){
+                        
+                        guide_law_->setInterceptedPoint(DTraj.back());
+
+                        temp_guider.simplifyToSevenPoints(DTraj);
+                        temp_guider.Eigen2Poly(DTraj);
+                        auto time_now = ros::Time::now();
+                        global_data_.setGlobalTraj(temp_guider.dronePolyTraj, time_now);
+
+                        
+
                         return true;
-                else{
+                }
+                else
+                {
                         return false;
                 }
         }
@@ -60,9 +84,11 @@ namespace oaguider{
         }
 
         //5  
-        void OAGManager::calcInterceptPt(const Eigen::Vector3d startPt, const Eigen::Vector3d targetPt, Eigen::Vector3d &InterceptPoint){
-                InterceptPoint<<0.0,0.0,0.0;
+        void OAGManager::getInterceptPt(Eigen::Vector3d &InterceptPoint){
+                guide_law_->getInterceptedPoint(InterceptPoint);
         }
+
+
 
 
 }

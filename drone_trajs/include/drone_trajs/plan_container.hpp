@@ -34,7 +34,30 @@ struct LocalTrajData{
 class GlobalTrajData{
         public:
                 PolynomialTraj global_traj_;
+                vector<UniformBspline> local_traj_;
+
                 double global_duration_;
+                ros::Time  global_start_time_;
+                double  local_start_time_, local_end_time_;
+                double time_increase_;
+                double  last_time_inc_;
+                double last_progress_time_;
+
+
+                void setGlobalTraj(const PolynomialTraj &traj, const ros::Time &time)
+                {
+                        global_traj_ = traj;
+                        global_traj_.init();
+                        global_duration_ = global_traj_.getTimeSum();
+                        global_start_time_ = time;
+
+                        local_traj_.clear();
+                        local_start_time_ = -1;
+                        local_end_time_ = -1;
+                        time_increase_ = 0.0;
+                        last_time_inc_ = 0.0;
+                        last_progress_time_ = 0.0;
+                }
 
 };
 

@@ -2,11 +2,6 @@
 
 
 
-States::States(Eigen::Vector3d _pos, Eigen::Vector3d _vel, Eigen::Vector3d _acc){
-        pos = _pos;
-        vel = _vel;
-        acc = _acc;
-}
 
 vehicle::vehicle(){    }
 
@@ -32,6 +27,14 @@ void vehicle::init(std::string _role,  States state){
         veh_states.vel = state.vel;
         veh_states.acc = state.acc;
         N = 3.0;
+}
+void vehicle::setVehicleID(std::string vehName){
+        role = vehName;
+}
+
+
+void  vehicle::setState(States  state){
+        veh_states = state;
 }
 
 Eigen::Vector3d vehicle::pn_guidance(Eigen::Vector3d r, Eigen::Vector3d vr){
@@ -129,9 +132,6 @@ void  vehicle::getPos(Eigen::Vector3d &Pos){
         Pos = veh_states.pos;
 }
 
-// void  vehicle::setState(States  state){
-
-// }
 
 void  vehicle::getVel(Eigen::Vector3d &Vel){
         Vel = veh_states.vel;

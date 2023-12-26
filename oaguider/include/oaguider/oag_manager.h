@@ -27,7 +27,8 @@ class OAGManager{
                 bool guideGlobalTraj(const Eigen::Vector3d &start_pos, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
                                          const Eigen::Vector3d &end_pos, const Eigen::Vector3d &end_vel, const Eigen::Vector3d &end_acc);
                 void deliverTrajToOptimizer();
-                void calcInterceptPt(const Eigen::Vector3d startPt,const  Eigen::Vector3d targetPt, Eigen::Vector3d &InterceptPoint);
+
+                void getInterceptPt(Eigen::Vector3d &InterceptPoint);
         public:
                 GuideParammeters gp_;
                 LocalTrajData local_data_;

@@ -60,6 +60,11 @@ namespace oaguider{
                         ~GuidanceLaw(){};
 
                         void init(std::string dname, std::string  tname, States D, States T);
+                        void setID(std::string dname, std::string  tname);
+                        void setVeh(States drone, States target);
+                        void  setInterceptedPoint(Eigen::Vector3d  point);
+                        void  getInterceptedPoint(Eigen::Vector3d  &point);
+
                         void setParam(ros::NodeHandle &nh);
                         void setDroneANDEnvStates(vector<Eigen::Vector3d> &drone, vector<Eigen::Vector3d> &target, vector<Eigen::Vector3d> &obs);
                         void plan();

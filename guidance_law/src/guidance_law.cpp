@@ -9,6 +9,26 @@ void GuidanceLaw::init(std::string dname, std::string  tname, States D, States T
         Target.init(tname, T);
 }
 
+void GuidanceLaw::setID(std::string dname, std::string  tname){
+        Drone.setVehicleID(dname);
+        Target.setVehicleID(tname);
+}
+
+
+void GuidanceLaw::setVeh(States drone, States target){
+        Drone.setState(drone);
+        Target.setState(target);
+
+}
+
+void  GuidanceLaw::setInterceptedPoint(Eigen::Vector3d  point){
+        InterceptedPt_ =  point;
+}
+
+void  GuidanceLaw::getInterceptedPoint(Eigen::Vector3d  &point){
+       point = InterceptedPt_;
+}
+
 void GuidanceLaw::setParam(ros::NodeHandle &nh){
         ROS_INFO("Set GuideLaw  Parameters!");
         nh.param("guide/guide_type", guide_type_, -1);
@@ -38,6 +58,7 @@ void GuidanceLaw::setDroneANDEnvStates(vector<Eigen::Vector3d> &drone, vector<Ei
         }
 }
 
+
 void GuidanceLaw::plan(){
         droneTraj_.clear();
         targetTraj_.clear();
@@ -61,6 +82,7 @@ void GuidanceLaw::plan(){
         }
 
 }
+
 
 void GuidanceLaw::Eigen2Poly(vector<Eigen::Vector3d> &traj){
         Eigen::MatrixXd pos(3, traj.size());

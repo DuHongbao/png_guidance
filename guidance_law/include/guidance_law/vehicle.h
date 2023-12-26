@@ -11,15 +11,33 @@
 
 typedef std::vector<Eigen::Vector3d> V3s;
 
-
 class States{ 
+
         public:        
                 Eigen::Vector3d pos;
                 Eigen::Vector3d vel;
                 Eigen::Vector3d acc;
+
         public:
-                States(Eigen::Vector3d _pos, Eigen::Vector3d _vel, Eigen::Vector3d _acc);
-                States(){}
+
+                States(Eigen::Vector3d _pos, Eigen::Vector3d _vel, Eigen::Vector3d _acc){
+                        pos = _pos;
+                        vel = _vel;
+                        acc = _acc;
+                };
+
+                States(const States& state){
+                        pos = state.pos;
+                        vel =    state.vel;
+                        acc =  state.acc;
+                };
+
+                States(){
+                        Eigen::Vector3d  vec = Eigen::Vector3d::Zero();
+                        pos = vec;
+                        vel = vec;
+                        acc = vec;
+                }
                 ~States(){}      
 };
 
@@ -40,10 +58,13 @@ public:
         ~vehicle();
         States states();
         void init(std::string _role,  States state);
+        void setVehicleID(std::string vehName);
+        void  setState(States  state);
+
         void  getPos(Eigen::Vector3d &Pos);
         
         void  getVel(Eigen::Vector3d &Vel);
-        //void  setState(States  state);
+        
 
 
         Eigen::Vector3d pn_guidance(Eigen::Vector3d r, Eigen::Vector3d vr);

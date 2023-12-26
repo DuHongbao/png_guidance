@@ -272,8 +272,22 @@ namespace oaguider{
 
         //7
         void OagFSM::calculateInterceptPoint(Eigen::Vector3d &targetCurrPt, Eigen::Vector3d &InterceptPt){
-                init_pt_ = odom_pos_;
-                guider_manager_->calcInterceptPt(init_pt_, targetCurrPt, InterceptPt);
+                States current_drone;
+                States current_target;
+                std::vector<Eigen::Vector3d>  d_traj,t_traj;
+                
+                 //通过回调函数获取
+                vehicle temp_drone("temp_drone", current_drone);
+                vehicle temp_target("temp_target", current_target);
+                
+                GuidanceLaw temp_guider(temp_drone, temp_target);
+
+                temp_guider.calcPNGuideTraj(temp_drone, temp_target, d_traj, t_traj);
+
+                InterceptPt = temp_drone.veh_states.pos;
+
+                //guider_manager_->guide_law_->calcPNGuideTraj();
+                //guider_manager_->getInterceptPt(InterceptPt);
         }
 
 
