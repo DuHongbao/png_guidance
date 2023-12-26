@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+        <node pkg="guidance_law"  name="png_node"  type="png_node" output="screen"/>
+               <!-- <param name=" value_a" value="99" type="int" />-->
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find guidance_law)/config/config.rviz" required="true" />
+
+</launch>

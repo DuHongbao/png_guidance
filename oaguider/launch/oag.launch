@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+        <node pkg="oag_planner"  name="oagplanner"  type="oagplanner" output="screen"/>
+        <node pkg="oag_planner"  name="oagpretictor"  type="oagpredictor" output="screen"/>
+               <!-- <param name=" value_a" value="99" type="int" />-->
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find oag_planner)/launch/oag.rviz" required="true" /> 
+
+</launch>
