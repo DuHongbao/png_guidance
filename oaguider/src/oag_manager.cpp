@@ -32,13 +32,55 @@ namespace oaguider{
         }
 
         //2
-        bool OAGManager::reboundReguide(){
+        bool OAGManager::reboundReguide(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
+                                        Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,
+                                        Eigen::Vector3d local_target_vel){
+
+                double ts = (start_pt - local_target_pt).norm() > 0.1 ? gp_.ctrl_pt_dist / gp_.maxVel_ * 1.5 : gp_.ctrl_pt_dist / gp_.maxVel_ * 5; 
                 vector<Eigen::Vector3d> drone;
                 vector<Eigen::Vector3d> target;
                 vector<Eigen::Vector3d> obstacles;
 
                 guide_law_->setDroneANDEnvStates(drone, target, obstacles);
                 guide_law_->plan();
+
+                vector<Eigen::Vector3d> point_set, start_end_derivatives;
+
+                static bool flag_first_call = true, flag_force_polynomial = false;
+
+                bool flag_regenerate = false;
+
+                do 
+                {
+                        point_set.clear();
+                        start_end_derivatives.clear();
+                        flag_regenerate = false;
+                        // Intial path  generated from a min-snaptraj by older.
+                        if(flag_first_call || flag_force_polynomial){
+
+
+
+
+                        // Initial path generated from previous trajectory.
+                        }else{
+
+                        }
+
+                }while(flag_regenerate);
+
+                Eigen::MatrixXd ctrl_pts, ctrl_pts_temp;
+                UniformBspline::parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
+
+                
+
+
+
+                
+
+
+
+
+
                 return true;
         }
 
@@ -67,8 +109,6 @@ namespace oaguider{
                         temp_guider.Eigen2Poly(DTraj);
                         auto time_now = ros::Time::now();
                         global_data_.setGlobalTraj(temp_guider.dronePolyTraj, time_now);
-
-                        
 
                         return true;
                 }

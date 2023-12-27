@@ -23,7 +23,9 @@ class OAGManager{
 
                 typedef unique_ptr<OAGManager> Ptr;
                 void initGuiderModules(ros::NodeHandle &nh, OAGVisualization::Ptr vis = NULL);
-                bool reboundReguide();
+                bool reboundReguide(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
+                                        Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,
+                                        Eigen::Vector3d local_target_vel);
                 bool guideGlobalTraj(const Eigen::Vector3d &start_pos, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
                                          const Eigen::Vector3d &end_pos, const Eigen::Vector3d &end_vel, const Eigen::Vector3d &end_acc);
                 void deliverTrajToOptimizer();

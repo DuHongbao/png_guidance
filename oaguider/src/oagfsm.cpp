@@ -260,7 +260,7 @@ namespace oaguider{
         //6
         bool OagFSM::callReboundReguide(){
                 getLocalTarget();
-                bool plan_and_refine_success =  guider_manager_->reboundReguide();
+                //bool plan_and_refine_success =  guider_manager_->reboundReguide();
                 auto info = &guider_manager_->local_data_;
                 drone_trajs::Bspline bspline;
                 /* 1. publish traj to traj_server */
