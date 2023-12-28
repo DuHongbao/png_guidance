@@ -41,6 +41,7 @@ namespace oaguider{
                         PolynomialTraj traj;
                         ros::Subscriber Obs_sub, Tar_sub, odom_sub,imu_sub;
                         double maxVel_, maxAcc_, maxJerk_;
+                        static double maxVel;
 
                         vector<Eigen::Vector3d> droneTraj_, droneVelTraj_;
                         vector<Eigen::Vector3d> targetTraj_, targetVelTraj_;
@@ -73,7 +74,7 @@ namespace oaguider{
                       
                         bool  calcPNGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3d> &DTraj, vector<Eigen::Vector3d> &TTraj);
                         static PolynomialTraj guidePNTraj(const Eigen::Vector3d &start_pt, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
-                                                    const Eigen::Vector3d &end_pt, const Eigen::Vector3d &end_vel, const Eigen::Vector3d &end_acc, double t);
+                                                    const Eigen::Vector3d &end_pt, const Eigen::Vector3d &end_vel, const Eigen::Vector3d &end_acc, double trajtime);
                         bool  calcCBFGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3d> &DTraj, vector<Eigen::Vector3d> &TTraj);
         };
 

@@ -123,13 +123,51 @@ namespace oaguider{
                                 cout<<"t:"<<t<<endl;
                                 t -= ts;
                                 double poly_time = (local_data_.position_traj_.evaluateDeBoorT(t) - local_target_pt).norm() / gp_.maxVel_ * 2.0;
+                                if (poly_time > ts)
+                                {
+                                        PolynomialTraj gl_traj = GuidanceLaw::guidePNTraj(local_data_.position_traj_.evaluateDeBoorT(t), local_data_.velocity_traj_.evaluateDeBoorT(t), 
+                                        local_data_.acceleration_traj_.evaluateDeBoorT(t), local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), poly_time);
+                                        for(t = ts; t < poly_time; t += ts){
+                                                if(!pseudo_arc_length.empty())
+                                                {
+                                                        segment_point.push_back(gl_traj.evaluate(t));
+                                                        pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
+                                                }else{
+                                                        ROS_ERROR("pseudo_arc_length is empty, return!");
+                                                        continous_failures_count_++;
+                                                        return false;
+                                                }
+                                        }
+                                }
 
+                                double sample_length = 0;
+                                double cps_dist = gp_.ctrl_pt_dist * 1.5; // cps_dist will be divided by 1.5 in the next
+                                size_t id = 0;
+                                do
+                                {
+                                cps_dist /= 1.5;
+                                point_set.clear();
+                                sample_length = 0;
+                                id = 0;
+                                while ((id <= pseudo_arc_length.size() - 2) && sample_length <= pseudo_arc_length.back())
+                                {
+                                if (sample_length >= pseudo_arc_length[id] && sample_length < pseudo_arc_length[id + 1])
+                                {
+                                point_set.push_back((sample_length - pseudo_arc_length[id]) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id + 1] +
+                                                        (pseudo_arc_length[id + 1] - sample_length) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id]);
+                                sample_length += cps_dist;
+                                }
+                                else
+                                id++;
+                                }
+                                //point_set.push_back(local_target_pt);
 
+                                } while (point_set.size() < 7); // If the start point is very close to end point, this will help
 
 
                                 start_end_derivatives.push_back(local_data_.velocity_traj_.evaluateDeBoorT(t_cur));
-                                start_end_derivatives.push_back(local_target_vel);
-                                start_end_derivatives.push_back(local_data_.acceleration_traj_.evaluateDeBoorT(t_cur));
+                                start_end_derivatives.push_back(local_target_vel);              //
+                                start_end_derivatives.push_back(local_data_.acceleration_traj_.evaluateDeBoorT(t_cur)); 
                                 start_end_derivatives.push_back(Eigen::Vector3d::Zero());
 
                                 if (point_set.size() > gp_.guide_horizen_ / gp_.ctrl_pt_dist * 3) // The initial path is unnormally too long!
