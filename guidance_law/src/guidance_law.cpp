@@ -140,6 +140,15 @@ bool  GuidanceLaw::calcPNGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3
 }
 
 
+PolynomialTraj GuidanceLaw::guidePNTraj(const Eigen::Vector3d &start_pt, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
+                                                    const Eigen::Vector3d &end_pt, const Eigen::Vector3d &end_vel, const Eigen::Vector3d &end_acc, double t){
+
+
+        PolynomialTraj traj;
+        return traj;
+}
+
+
 bool GuidanceLaw::calcCBFGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3d> &DTraj, vector<Eigen::Vector3d> &TTraj){
         double t=0.0;
         Eigen::Vector3d  IntePt;
