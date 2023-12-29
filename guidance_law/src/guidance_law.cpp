@@ -192,8 +192,8 @@ PolynomialTraj GuidanceLaw::guidePNTraj(const Eigen::Vector3d &start_pt, const E
         for (int i = 0; i < Eigentraj.size(); i++)
                 {pos.col(i) = Eigentraj[i];}
                         
-        for (int i = 0; i < Eigentraj.size()/ - 1; i++)
-                {time(i) = (pos.col(i + 1) - pos.col(i)).norm() / maxVel;}  //1.0is the max velocity
+        for (int i = 0; i < Eigentraj.size() - 1; i++)
+                {time(i) = (pos.col(i + 1) - pos.col(i)).norm() / 1.0;}  //1.0is the max velocity
 
         time(0) *= 2.0;
         time(time.rows() - 1) *= 2.0;

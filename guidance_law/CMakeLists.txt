@@ -35,3 +35,8 @@ target_link_libraries(guidance_law    ${catkin_LIBRARIES}   )
 #add_executable(png_node src/png.cpp src/vehicle.cpp)
 #add_dependencies(png_node  ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 # target_link_libraries(png_node    ${catkin_LIBRARIES}  )
+
+add_executable(test_node src/test.cpp  src/vehicle.cpp)
+add_dependencies(test_node  ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_node    ${catkin_LIBRARIES}   )
+
