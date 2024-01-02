@@ -78,7 +78,7 @@ namespace oaguider
                         void planNextWaypoint(const Eigen::Vector3d next_wp);
                         void targetCallback(const geometry_msgs::PoseStampedPtr &msg);  //change from waypointCallback
                         void calculateInterceptPoint(Eigen::Vector3d &targetCurrPt, Eigen::Vector3d &InterceptPt);
-                        bool GuideFromGlobalTraj();
+                        bool GuideFromGlobalTraj(const int trial_times);
                         bool GuideFromCurrentTraj(const int trial_times);
                         void getLocalTarget();
                         bool callReboundReguide();

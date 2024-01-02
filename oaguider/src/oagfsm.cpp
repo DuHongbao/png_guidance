@@ -232,8 +232,18 @@ namespace oaguider{
         }
 
         //3
-        bool OagFSM::GuideFromGlobalTraj(){
+        bool OagFSM::GuideFromGlobalTraj(const int trial_times){
 
+                start_pt_ = odom_pos_;
+                start_pt_ = odom_vel_;
+                start_acc_.setZero();
+
+                for (int i = 0; i < trial_times; i++){
+                if (callReboundReguide()){
+                        return true;
+                }
+                }
+                return false;
         }
 
         //4
