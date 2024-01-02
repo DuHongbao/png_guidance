@@ -39,14 +39,16 @@ namespace oaguider
                         int waypoint_num_, wp_id_;
                         double planning_horizon_, planning_horizon_time_;
                         double emergency_time_;
-                        double no_replan_thresh_;
+                        double no_replan_thresh_, replan_thresh_;
                         bool flag_realworld_experiment_;
                         bool enable_fail_safe_;
+                        bool flag_escape_emergency_;
                         bool use_wpts_;
 
                         /*guider data*/
                         bool have_trigger_, have_target_, have_odom_,have_new_target_;
                         FSM_STATE  exec_state_;
+                        int continously_called_times_{0};
 
                         Eigen::Vector3d odom_pos_,odom_vel_,odom_acc_;
                         Eigen::Quaterniond odom_orient_;
@@ -72,7 +74,7 @@ namespace oaguider
                         //void triggerCbk(const geometry_msgs::PoseStampedPtr &msg);
 
                         void changeFSMExecState(FSM_STATE new_state, string pos_call);
-                        bool callOaguiderTRAJ(bool use_waypoint);
+                        bool callOaguiderTRAJ(const int trial_times);
                         void planNextWaypoint(const Eigen::Vector3d next_wp);
                         void targetCallback(const geometry_msgs::PoseStampedPtr &msg);  //change from waypointCallback
                         void calculateInterceptPoint(Eigen::Vector3d &targetCurrPt, Eigen::Vector3d &InterceptPt);
@@ -80,6 +82,7 @@ namespace oaguider
                         bool GuideFromCurrentTraj(const int trial_times);
                         void getLocalTarget();
                         bool callReboundReguide();
+                        bool callEmergencyStop(Eigen::Vector3d stop_pos);
 
                 public:
                         OagFSM(){}

@@ -86,8 +86,8 @@ namespace oaguider{
 
                 init_pt_ = odom_pos_;
                 Eigen::Vector3d object_pt(msg->pose.position.x, msg->pose.position.y, 1.0);
-                calculateInterceptPoint(object_pt, intercept_pt_);
-                planNextWaypoint(intercept_pt_);
+                //calculateInterceptPoint(object_pt, intercept_pt_);
+                planNextWaypoint(object_pt);
         }
 
         //1
@@ -161,16 +161,14 @@ namespace oaguider{
                                 start_yaw_(1) = start_yaw_(2) = 0.0;
 
 
-                                bool success = callOaguiderTRAJ(use_wpts_);
+                                bool success = callOaguiderTRAJ(10);
                                 if (success){
                                         changeFSMExecState(EXEC_TRAJ, "FSM");
                                 }else{
-                                        use_wpts_ = true;
                                         changeFSMExecState(GEN_NEW_TRAJ, "FSM");
                                 }
                                 break;
                         }
-
                         case EXEC_TRAJ:{
                                 /**/
                                 LocalTrajData *info = &guider_manager_->local_data_;
@@ -180,34 +178,50 @@ namespace oaguider{
 
 
                                 Eigen::Vector3d pos = info->position_traj_.evaluateDeBoorT(t_cur);
-                                if(target_type_ ==TARGET_STATE::STATIC_TARGET){              //static target
-                                        if((wp_id_ < waypoint_num_ - 1) &&(end_pt_ -pos).norm()<no_replan_thresh_){
-                                                wp_id_++;
-                                                planNextWaypoint(wps_[wp_id_]);
-                                        }else if ((local_target_pt_ - end_pt_).norm() < 1e-3) // close to the global target
-                                        {
-                                                if (t_cur > info->duration_ - 1e-2){
-                                                        have_target_ = false;
-                                                        have_trigger_ = false;
-                                                        changeFSMExecState(WAIT_TARGET, "FSM");
-                                                        goto force_return;
+
+                                if( (local_target_pt_ - end_pt_).norm() < 1e-3  ){          // close to the global target        
+                                        if (t_cur > info->duration_ - 1e-2){
+                                                have_target_ = false;
+                                                have_trigger_ = false;
+
+                                                changeFSMExecState(WAIT_TARGET, "FSM");
+                                                goto force_return;
+                                                // return;
                                                 }
-                                        }
-                                }else if(target_type_ == TARGET_STATE::MOVING_TARGET){      //moving target
-
-                                }else{
-
+                                                else if ((end_pt_ - pos).norm() > no_replan_thresh_ && t_cur > replan_thresh_)
+                                                {
+                                                        changeFSMExecState(REPLAN_TRAJ, "FSM");
+                                                }
+                                }else if( t_cur > replan_thresh_ ){      
+                                        changeFSMExecState(REPLAN_TRAJ, "FSM");
                                 }
 
                                 break;
                         }
-                        
                         case REPLAN_TRAJ:{
-                                
+                                if (GuideFromCurrentTraj(1))
+                                {
+                                        changeFSMExecState(EXEC_TRAJ, "FSM");
+                                }
+                                else
+                                {
+                                        changeFSMExecState(REPLAN_TRAJ, "FSM");
+                                }
+                                break;
                         }
-
                         case EMERGENCY_STOP:{
-                                
+                                if (flag_escape_emergency_) // Avoiding repeated calls
+                                {
+                                        callEmergencyStop(odom_pos_);
+                                }
+                                else
+                                {
+                                        if (enable_fail_safe_ && odom_vel_.norm() < 0.1)
+                                        changeFSMExecState(GEN_NEW_TRAJ, "FSM");
+                                }
+
+                                flag_escape_emergency_ = false;
+                                break;
                         }
                 }
 
@@ -291,7 +305,7 @@ namespace oaguider{
         }
 
 
-        bool OagFSM::callOaguiderTRAJ(bool use_waypoint){
+        bool OagFSM::callOaguiderTRAJ(const int trial_times){
 
                 return true;
         }
@@ -304,6 +318,21 @@ namespace oaguider{
 
         void OagFSM::changeFSMExecState(FSM_STATE new_state, string pos_call){
 
+                if (new_state == exec_state_)
+                continously_called_times_++;
+                else
+                continously_called_times_ = 1;
+
+                static string state_str[7] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REPLAN_TRAJ", "EXEC_TRAJ", "EMERGENCY_STOP"};
+                int pre_s = int(exec_state_);
+                exec_state_ = new_state;
+                cout << "[" + pos_call + "]: from " + state_str[pre_s] + " to " + state_str[int(new_state)] << endl;
+        }
+
+
+        bool OagFSM::callEmergencyStop(Eigen::Vector3d stop_pos)
+        {
+                return true;
         }
 
 

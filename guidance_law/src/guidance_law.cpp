@@ -179,7 +179,7 @@ bool  GuidanceLaw::calcPNGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3
 //         int size = Eigentraj.size();
 //         for(int i = 0; i<size; ){
 //                 newTraj.push_back(Eigentraj[i]);
-//                 i +=( size/7 );
+//                 i +=( size/8 );
 //         }
 //         Eigentraj.clear();
 //         Eigentraj = newTraj;
@@ -204,7 +204,7 @@ bool  GuidanceLaw::calcPNGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3
 // }
 
 
-PolynomialTraj guidePNTraj(const Eigen::Vector3d &start_pt, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
+PolynomialTraj GuidanceLaw::guidePNTraj(const Eigen::Vector3d &start_pt, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
                                                     const Eigen::Vector3d &end_pt, const Eigen::Vector3d &end_vel, const Eigen::Vector3d &end_acc, double trajtime){
         States state_A(start_pt, start_vel, start_acc);
         States state_B(end_pt, end_vel, end_acc);
@@ -212,6 +212,7 @@ PolynomialTraj guidePNTraj(const Eigen::Vector3d &start_pt, const Eigen::Vector3
         Eigen::Vector3d A_temp_;
         vector<Eigen::Vector3d>  Eigentraj;
         PolynomialTraj traj;
+        double trajTime = 0.0;
         double t = 0.0, tf = trajtime, ts = 1.5;
 
         ////////////calcPNGuideTraj(A,B,dtraj,ttraj);
