@@ -56,7 +56,7 @@ namespace oaguider
                         Eigen::Vector3d init_pt_, start_pt_, start_vel_,start_acc_, start_yaw_;
                         Eigen::Vector3d end_pt_, end_vel_;
                         Eigen::Vector3d intercept_pt_, intercept_yaw_,old_intercept_pt_;
-                        Eigen::Vector3d local_target_pt_;
+                        Eigen::Vector3d local_target_pt_, local_target_vel_;
                         std::vector<Eigen::Vector3d> wps_;
                         int current_wp_;
                         int obstacle_num_;

@@ -59,6 +59,35 @@ class GlobalTrajData{
                         last_progress_time_ = 0.0;
                 }
 
+                Eigen::Vector3d getVelocity(double t){
+                        if (t >= -1e-3 && t <= local_start_time_){
+                                return global_traj_.evaluateVel(t);
+                        }
+                        else if (t >= local_end_time_ && t <= global_duration_ + 1e-3){
+                                return global_traj_.evaluateVel(t - time_increase_);
+                        }
+                        else{
+                                double tm, tmp;
+                                local_traj_[0].getTimeSpan(tm, tmp);
+                                return local_traj_[1].evaluateDeBoor(tm + t - local_start_time_);
+                        }
+                }
+
+                Eigen::Vector3d getPosition(double t){
+
+                        if (t >= -1e-3 && t <= local_start_time_){
+                                return global_traj_.evaluate(t - time_increase_ + last_time_inc_);
+                        }
+                        else if (t >= local_end_time_ && t <= global_duration_ + 1e-3){
+                                return global_traj_.evaluate(t - time_increase_);
+                        }
+                        else{
+                                double tm, tmp;
+                                local_traj_[0].getTimeSpan(tm, tmp);
+                                return local_traj_[0].evaluateDeBoor(tm + t - local_start_time_);
+                        }
+                }
+
 };
 
 

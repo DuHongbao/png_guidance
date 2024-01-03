@@ -248,6 +248,7 @@ namespace oaguider{
 
         //4
         bool OagFSM::GuideFromCurrentTraj(const int trial_times){
+
                 LocalTrajData *info = &guider_manager_->local_data_;
                 ros::Time time_now = ros::Time::now();
                 double t_cur = (time_now - info-> start_time_).toSec();
@@ -278,6 +279,35 @@ namespace oaguider{
 
         //5
         void OagFSM::getLocalTarget(){
+                double t;
+                double t_step = planning_horizon_ /20 /guider_manager_ -> gp_.maxVel_;
+                double dist_min = 9999, dist_min_t = 0.0;
+                for(t = guider_manager_->global_data_.last_progress_time_; t < guider_manager_->global_data_.global_duration_; t += t_step){
+                        Eigen::Vector3d pos_t = guider_manager_->global_data_.getPosition(t);
+                        double dist = (pos_t - start_pt_).norm();
+                        if(dist < dist_min){
+                                dist_min = dist;
+                                dist_min_t = t;
+                        }
+                        if(dist >= planning_horizon_){
+                                local_target_pt_ = pos_t;
+                                guider_manager_  -> global_data_.last_progress_time_ = dist_min_t;
+                                break;
+                        }
+                }
+
+                if(t > guider_manager_->global_data_.global_duration_){
+                        local_target_pt_ = end_pt_;
+                        guider_manager_ -> global_data_.last_progress_time_ = guider_manager_ -> global_data_.global_duration_;
+                }
+
+
+                if((end_pt_ - local_target_pt_).norm() < (guider_manager_->gp_.maxVel_ * guider_manager_ -> gp_.maxVel_)/(2*guider_manager_->gp_.maxAcc_) ){
+                        local_target_vel_ = Eigen::Vector3d::Zero();
+                }else {
+                        local_target_vel_ = guider_manager_ -> global_data_.getVelocity(t);
+                }
+
 
         }
 
