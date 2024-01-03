@@ -75,8 +75,8 @@ namespace oaguider
 
                         void changeFSMExecState(FSM_STATE new_state, string pos_call);
                         bool callOaguiderTRAJ(const int trial_times);
-                        void planNextWaypoint(const Eigen::Vector3d next_wp);
-                        void targetCallback(const geometry_msgs::PoseStampedPtr &msg);  //change from waypointCallback
+                        void planNextWaypoint();
+                        void targetCallback(const nav_msgs::OdometryConstPtr &msg);  //change from waypointCallback
                         Eigen::Vector3d  calculateInterceptPoint(Eigen::Vector3d targetCurrPt, Eigen::Vector3d targetCurVel);
                         bool GuideFromGlobalTraj(const int trial_times);
                         bool GuideFromCurrentTraj(const int trial_times);

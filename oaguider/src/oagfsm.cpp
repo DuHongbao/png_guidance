@@ -79,24 +79,26 @@ namespace oaguider{
         }
 
         //0
-        void OagFSM::targetCallback(const geometry_msgs::PoseStampedPtr &msg){
-                if (msg->pose.position.z < -0.1)
+        void OagFSM::targetCallback(const nav_msgs::OdometryConstPtr &msg){
+                if (msg->pose.pose.position.z < -0.1)
                         return;
                 cout << "Triggered!"<<endl;
 
                 init_pt_ = odom_pos_;
-                Eigen::Vector3d object_pt(msg->pose.position.x, msg->pose.position.y, 1.0);
+                //Eigen::Vector3d object_pt(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
+                end_pt_ = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.x, msg->pose.pose.position.x);
+                end_vel_ = Eigen::Vector3d(msg->twist.twist.linear.x, msg->twist.twist.linear.y, msg->twist.twist.linear.z);
+                
                 //calculateInterceptPoint(object_pt, intercept_pt_);
-                planNextWaypoint(object_pt);
+                planNextWaypoint();
         }
 
         //1
-        void OagFSM::planNextWaypoint(const Eigen::Vector3d next_wp){
+        void OagFSM::planNextWaypoint(){
                 bool success = false;
-                Eigen::Vector3d start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
+                Eigen::Vector3d start_pos, start_vel, start_acc, end_acc;
 
-                end_pos = next_wp;
-                Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(end_pos, end_vel);
+                Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(end_pt_, end_vel_);
                 
                 if( (intercept_pt_ - old_intercept_pt_).norm()<0.5 )// if the intercept point not changed;
                 {
@@ -106,21 +108,22 @@ namespace oaguider{
                         start_pos = odom_pos_;
                         start_vel = odom_vel_;
                         start_acc = Eigen::Vector3d::Zero();
-                        end_vel = Eigen::Vector3d::Zero();
+
                         end_acc = Eigen::Vector3d::Zero();
 
-                        success = guider_manager_->guideGlobalTraj(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc);
+                        success = guider_manager_->guideGlobalTraj(start_pos, start_vel, start_acc, end_pt_, end_vel_, end_acc);
                         old_intercept_pt_ = intercept_pt_;
                 }
 
                 if(success){
-                        end_pt_ = next_wp;
+                        
                         constexpr double step_size_t = 0.1;
                         int i_end = floor(guider_manager_->global_data_.global_duration_ / step_size_t);
                         vector<Eigen::Vector3d> global_traj(i_end);
                         for (int i = 0; i < i_end; i++){
                                 global_traj[i] = guider_manager_->global_data_.global_traj_.evaluate(i * step_size_t);
                         }
+                        
                         end_vel_.setZero();
                         have_target_ = true;
                         have_new_target_ = true;

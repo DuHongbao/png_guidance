@@ -56,6 +56,9 @@ add_executable(oagpredictor src/dtopub_node.cpp)
 add_dependencies(oagpredictor  ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(oagpredictor    ${catkin_LIBRARIES}   )
 
+add_executable(traj_server src/traj_server.cpp)
+target_link_libraries(traj_server ${catkin_LIBRARIES})
+
 
 
 

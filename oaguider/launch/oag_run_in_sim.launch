@@ -1,0 +1,22 @@
+<launch>
+<arg name="" value="10"/>
+<arg name="drone_id" value="0"/>
+
+<node pkg ="" name="" type="" output="">
+        <prarm name="" value=""/>
+</node>
+
+
+
+<node pkg="oa_guider" name="drone_traj_server" type="traj_server" output="screen">
+        <remap from="position_cmd" to="drone_guider/pos_cmd"/>
+        <remap from="~guider/bspline" to="drone_planning/bspline"/>
+        <param name="traj_server/time_forward" value="1.0" type="double"/>
+</node>
+
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find oa_guider)/launch/sim.rviz" required="true" />
+
+
+
+
+</launch>
