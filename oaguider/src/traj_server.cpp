@@ -236,7 +236,7 @@ int main(int argc, char **argv)
   // ros::NodeHandle node;
   ros::NodeHandle nh("~");
 
-  ros::Subscriber bspline_sub = nh.subscribe("planning/bspline", 10, bsplineCallback);
+  ros::Subscriber bspline_sub = nh.subscribe("/guider/bspline", 10, bsplineCallback);
 
   pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
 

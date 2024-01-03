@@ -1,0 +1,16 @@
+<launch>
+        <arg name="drone_id"/>
+        <arg name="odometry_topic"/>
+
+        <node pkg="oa_guider" name="oaguider" type="oaguider" output="screen"/>
+            <remap from="/odom_world" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
+
+
+
+
+
+
+
+
+
+</launch>

@@ -83,6 +83,7 @@ namespace oaguider
                         void getLocalTarget();
                         bool callReboundReguide();
                         bool callEmergencyStop(Eigen::Vector3d stop_pos);
+                        void printFSMExecState();
 
                 public:
                         OagFSM(){}

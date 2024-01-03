@@ -4,6 +4,7 @@ namespace oaguider{
 
 
         void OagFSM::odomCbk(const nav_msgs::OdometryConstPtr &msg){
+                //ROS_INFO("odomCbk().");
                 odom_pos_(0) = msg->pose.pose.position.x;
                 odom_pos_(1) = msg->pose.pose.position.y;
                 odom_pos_(2) = msg->pose.pose.position.z;
@@ -52,13 +53,13 @@ namespace oaguider{
                 exec_timer_ = nh.createTimer(ros::Duration(0.01), &OagFSM::execFsmCbk, this);
                 safety_timer_ = nh.createTimer(ros::Duration(0.05), &OagFSM::checkCollisionCbk, this);
 
-                odom_sub_ = nh.subscribe("odom_world", 1, &OagFSM::odomCbk, this);
+                odom_sub_ = nh.subscribe("/odom_world", 1, &OagFSM::odomCbk, this);
 
                 bspline_pub_ = nh.advertise<drone_trajs::Bspline>("guider/bspline", 10);
                 data_disp_pub_ = nh.advertise<drone_trajs::DataDisp>("guider/data_display", 100);
 
 
-                waypoint_sub_ = nh.subscribe("/move_base_simple/goal", 1, &OagFSM::targetCallback, this);
+                waypoint_sub_ = nh.subscribe("/predicted_target", 1, &OagFSM::targetCallback, this);
                 ROS_INFO("Wait for 1 second.");
                 int count = 0;
 
@@ -80,6 +81,7 @@ namespace oaguider{
 
         //0
         void OagFSM::targetCallback(const nav_msgs::OdometryConstPtr &msg){
+                ROS_INFO("targetCallback().");
                 if (msg->pose.pose.position.z < -0.1)
                         return;
                 cout << "Triggered!"<<endl;
@@ -145,6 +147,8 @@ namespace oaguider{
 
         //2
         void OagFSM::execFsmCbk(const ros::TimerEvent &e){
+
+                //printFSMExecState();
                 exec_timer_.stop(); // To avoid blockage
                 switch (exec_state_)
                 {
@@ -386,6 +390,13 @@ namespace oaguider{
         bool OagFSM::callEmergencyStop(Eigen::Vector3d stop_pos)
         {
                 return true;
+        }
+
+        void OagFSM::printFSMExecState()
+        {
+        static string state_str[7] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REPLAN_TRAJ", "EXEC_TRAJ", "EMERGENCY_STOP"};
+
+        cout << "[FSM]: state: " + state_str[int(exec_state_)] << endl;
         }
 
 
