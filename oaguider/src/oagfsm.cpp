@@ -94,12 +94,16 @@ namespace oaguider{
         void OagFSM::planNextWaypoint(const Eigen::Vector3d next_wp){
                 bool success = false;
                 Eigen::Vector3d start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
+
+                Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(end_pos, end_vel);
+                
                 if(intercept_pt_ == old_intercept_pt_)// if the intercept point not changed;
                 {
                         ;
                 }
                 else{
                         success = guider_manager_->guideGlobalTraj(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc);
+                        old_intercept_pt_ = intercept_pt_;
                 }
 
                 if(success){
@@ -161,7 +165,7 @@ namespace oaguider{
                                 start_yaw_(1) = start_yaw_(2) = 0.0;
 
 
-                                bool success = callOaguiderTRAJ(10);
+                                bool success = GuideFromGlobalTraj(10);
                                 if (success){
                                         changeFSMExecState(EXEC_TRAJ, "FSM");
                                 }else{
@@ -308,7 +312,6 @@ namespace oaguider{
                         local_target_vel_ = guider_manager_ -> global_data_.getVelocity(t);
                 }
 
-
         }
 
         //6
@@ -325,10 +328,11 @@ namespace oaguider{
         }
 
         //7
-        void OagFSM::calculateInterceptPoint(Eigen::Vector3d &targetCurrPt, Eigen::Vector3d &InterceptPt){
+        Eigen::Vector3d OagFSM::calculateInterceptPoint(Eigen::Vector3d targetCurrPt, Eigen::Vector3d targetCurVel){
                 States current_drone;
                 States current_target;
                 std::vector<Eigen::Vector3d>  d_traj,t_traj;
+                Eigen::Vector3d InterceptPt;
                 
                  //通过回调函数获取
                 vehicle temp_drone("temp_drone", current_drone);
@@ -339,9 +343,8 @@ namespace oaguider{
                 temp_guider.calcPNGuideTraj(temp_drone, temp_target, d_traj, t_traj);
 
                 InterceptPt = temp_drone.veh_states.pos;
+                return InterceptPt;
 
-                //guider_manager_->guide_law_->calcPNGuideTraj();
-                //guider_manager_->getInterceptPt(InterceptPt);
         }
 
 
