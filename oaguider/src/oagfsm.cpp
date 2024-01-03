@@ -95,13 +95,20 @@ namespace oaguider{
                 bool success = false;
                 Eigen::Vector3d start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
 
+                end_pos = next_wp;
                 Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(end_pos, end_vel);
                 
-                if(intercept_pt_ == old_intercept_pt_)// if the intercept point not changed;
+                if( (intercept_pt_ - old_intercept_pt_).norm()<0.5 )// if the intercept point not changed;
                 {
-                        ;
+                        success = true;
                 }
                 else{
+                        start_pos = odom_pos_;
+                        start_vel = odom_vel_;
+                        start_acc = Eigen::Vector3d::Zero();
+                        end_vel = Eigen::Vector3d::Zero();
+                        end_acc = Eigen::Vector3d::Zero();
+
                         success = guider_manager_->guideGlobalTraj(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc);
                         old_intercept_pt_ = intercept_pt_;
                 }
