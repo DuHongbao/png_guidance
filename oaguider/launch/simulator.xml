@@ -23,7 +23,7 @@
             <param name="init_x" value="$(arg init_x_)"/>
             <param name="init_y" value="$(arg init_y_)"/>
             <param name="init_z" value="$(arg init_z_)"/>
-            <remap from="~command" to="drone_$(arg drone_id)_planning/pos_cmd"/>
+            <remap from="~command" to="/drone1_cmd"/>
             <remap from="~odometry" to="/odom_world"/>
       </node>
 
@@ -44,7 +44,7 @@
             <param name="init_x" value="1.0"/>
             <param name="init_y" value="2.0"/>
             <param name="init_z" value="1.0"/>
-            <remap from="~command" to="drone_2/pos_cmd"/>
+            <remap from="~command" to="/drone2_cmd"/>
             <remap from="~odometry" to="/drone_odom_2"/>
       </node>
 
@@ -69,7 +69,7 @@
             <param name="init_x" value="10.0"/>
             <param name="init_y" value="0.0"/>
             <param name="init_z" value="1.0"/>
-            <remap from="~command" to="/target/pos_cmd"/>
+            <remap from="~command" to="/target1_cmd"/>
             <remap from="~odometry" to="/target_odom_1"/>
       </node>
 

@@ -98,18 +98,23 @@
   {
     // The derivative of a b-spline is also a b-spline, its order become p_-1
     // control point Qi = p_*(Pi+1-Pi)/(ui+p_+1-ui+1)
+
     Eigen::MatrixXd ctp(control_points_.rows(), control_points_.cols() - 1);
     for (int i = 0; i < ctp.cols(); ++i)
     {
+
       ctp.col(i) =
           p_ * (control_points_.col(i + 1) - control_points_.col(i)) / (u_(i + p_ + 1) - u_(i + 1));
     }
+
     return ctp;
   }
 
   UniformBspline UniformBspline::getDerivative()
   {
+
     Eigen::MatrixXd ctp = getDerivativeControlPoints();
+
     UniformBspline derivative(ctp, p_ - 1, interval_);
 
     /* cut the first and last knot */
