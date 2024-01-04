@@ -88,7 +88,7 @@ namespace oaguider{
 
                 init_pt_ = odom_pos_;
                 //Eigen::Vector3d object_pt(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
-                end_pt_ = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.x, msg->pose.pose.position.x);
+                end_pt_ = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
                 end_vel_ = Eigen::Vector3d(msg->twist.twist.linear.x, msg->twist.twist.linear.y, msg->twist.twist.linear.z);
                 
                 //calculateInterceptPoint(object_pt, intercept_pt_);
@@ -101,7 +101,10 @@ namespace oaguider{
                 Eigen::Vector3d start_pos, start_vel, start_acc, end_acc;
 
                 Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(end_pt_, end_vel_);
-                
+
+                cout<<"end_pt_:"<<end_pt_<<endl;
+                cout<<"end_vel_:"<<end_vel_<<endl;
+
                 if( (intercept_pt_ - old_intercept_pt_).norm()<0.5 )// if the intercept point not changed;
                 {
                         success = true;
@@ -163,6 +166,7 @@ namespace oaguider{
                                 break;
                         }
                         case WAIT_TARGET:{
+                                //cout<<"have_target_:"<<have_target_<<" have_trigger_:"<<have_trigger_<<endl;
                                 if (!have_target_ || !have_trigger_)
                                         goto force_return;
                                 else {

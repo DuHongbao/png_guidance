@@ -1,36 +1,113 @@
 <launch>
-  <arg name="init_x_"/>
-  <arg name="init_y_"/>
-  <arg name="init_z_"/> 
-  <arg name="obj_num" value="1" />
-  <arg name="map_size_x_"/>
-  <arg name="map_size_y_"/>
-  <arg name="map_size_z_"/>
-  <arg name="c_num" value="0"/>
-  <arg name="p_num" value="0"/>
-  <arg name="min_dist" value="0.8"/>
-  <arg name="odometry_topic"/>
-  <arg name="drone_id"/>
+      <arg name="init_x_"/>
+      <arg name="init_y_"/>
+      <arg name="init_z_"/> 
+      <arg name="target_x_"/>
+      <arg name="target_y_"/>
+      <arg name="target_z_"/> 
+      <arg name="obj_num" value="1" />
+      <arg name="map_size_x_"/>
+      <arg name="map_size_y_"/>
+      <arg name="map_size_z_"/>
+      <arg name="c_num" value="0"/>
+      <arg name="p_num" value="0"/>
+      <arg name="min_dist" value="0.8"/>
+      <arg name="odometry_topic"/>
+      <arg name="drone_id"/>
 
-  <node pkg="poscmd_2_odom" name="poscmd_2_odom" type="poscmd_2_odom" output="screen">
-        <param name="init_x" value="$(arg init_x_)"/>
-        <param name="init_y" value="$(arg init_y_)"/>
-        <param name="init_z" value="$(arg init_z_)"/>
-        <remap from="~command" to="drone_$(arg drone_id)_planning/pos_cmd"/>
-        <remap from="~odometry" to="/odom_world"/>
-  </node>
- 
-  <node pkg="odom_visualization" name="odom_visualization" type="odom_visualization" output="screen">
-        <remap from="~odom" to="/odom_world"/>
-        <param name="color/a" value="1.0"/>    
-        <param name="color/r" value="0.0"/>        
-        <param name="color/g" value="0.0"/>        
-        <param name="color/b" value="0.0"/>       
-        <param name="covariance_scale" value="100.0"/>       
-        <param name="robot_scale" value="1.0"/>
-        <param name="tf45" value="false"/>
-        <param name="drone_id" value="drone_id"/>
-  </node>
+
+
+
+      <!--Fight drone-->
+      <node pkg="poscmd_2_odom" name="poscmd_2_odom" type="poscmd_2_odom" output="screen">
+            <param name="init_x" value="$(arg init_x_)"/>
+            <param name="init_y" value="$(arg init_y_)"/>
+            <param name="init_z" value="$(arg init_z_)"/>
+            <remap from="~command" to="drone_$(arg drone_id)_planning/pos_cmd"/>
+            <remap from="~odometry" to="/odom_world"/>
+      </node>
+
+      <node pkg="odom_visualization" name="odom_visualization" type="odom_visualization" output="screen">
+            <remap from="~odom" to="/odom_world"/>
+            <param name="color/a" value="1.0"/>    
+            <param name="color/r" value="1.0"/>        
+            <param name="color/g" value="0.0"/>        
+            <param name="color/b" value="0.0"/>       
+            <param name="covariance_scale" value="100.0"/>       
+            <param name="robot_scale" value="1.0"/>
+            <param name="tf45" value="false"/>
+            <param name="drone_id" value="drone_1"/>
+      </node>
+
+
+      <node pkg="poscmd_2_odom" name="drone_2" type="poscmd_2_odom" output="screen">
+            <param name="init_x" value="1.0"/>
+            <param name="init_y" value="2.0"/>
+            <param name="init_z" value="1.0"/>
+            <remap from="~command" to="drone_2/pos_cmd"/>
+            <remap from="~odometry" to="/drone_odom_2"/>
+      </node>
+
+      <node pkg="odom_visualization" name="drone_visualization_2" type="odom_visualization" output="screen">
+            <remap from="~odom" to="/drone_odom_2"/>
+            <param name="color/a" value="1.0"/>    
+            <param name="color/r" value="1.0"/>        
+            <param name="color/g" value="0.0"/>        
+            <param name="color/b" value="0.0"/>       
+            <param name="covariance_scale" value="100.0"/>       
+            <param name="robot_scale" value="1.0"/>
+            <param name="tf45" value="false"/>
+            <param name="drone_id" value="drone_2"/>
+      </node>
+      <!--Fight drone-->
+
+
+
+      <!--Target drone-->
+      <!--id_1-->
+      <node pkg="poscmd_2_odom" name="target_odom_1" type="poscmd_2_odom" output="screen">
+            <param name="init_x" value="10.0"/>
+            <param name="init_y" value="0.0"/>
+            <param name="init_z" value="1.0"/>
+            <remap from="~command" to="/target/pos_cmd"/>
+            <remap from="~odometry" to="/target_odom_1"/>
+      </node>
+
+      <node pkg="odom_visualization" name="target_visualization_1" type="odom_visualization" output="screen">
+            <remap from="~odom" to="/target_odom_1"/>
+            <param name="color/a" value="1.0"/>    
+            <param name="color/r" value="0.0"/>        
+            <param name="color/g" value="0.0"/>        
+            <param name="color/b" value="1.0"/>       
+            <param name="covariance_scale" value="100.0"/>       
+            <param name="robot_scale" value="1.0"/>
+            <param name="tf45" value="false"/>
+            <param name="drone_id" value="target_1"/>
+      </node>
+
+      <!--id_2-->
+      <node pkg="poscmd_2_odom" name="target_odom_2" type="poscmd_2_odom" output="screen">
+            <param name="init_x" value="15.0"/>
+            <param name="init_y" value="0.0"/>
+            <param name="init_z" value="1.0"/>
+            <remap from="~command" to="/target/pos_cmd"/>
+            <remap from="~odometry" to="/target_odom_2"/>
+      </node>
+
+      <node pkg="odom_visualization" name="target_visualization_2" type="odom_visualization" output="screen">
+            <remap from="~odom" to="/target_odom_2"/>
+            <param name="color/a" value="1.0"/>    
+            <param name="color/r" value="0.0"/>        
+            <param name="color/g" value="0.0"/>        
+            <param name="color/b" value="1.0"/>       
+            <param name="covariance_scale" value="100.0"/>       
+            <param name="robot_scale" value="1.0"/>
+            <param name="tf45" value="false"/>
+            <param name="drone_id" value="target_2"/>
+      </node>
+      <!--Target drone-->
+
+
 
   <node pkg="local_sensing_node" type="pcl_render_node" name="drone_$(arg drone_id)_pcl_render_node" output="screen">
         <rosparam command="load" file="$(find local_sensing_node)/params/camera.yaml" />

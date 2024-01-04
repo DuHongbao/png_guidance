@@ -19,6 +19,9 @@ int main(int argc, char** argv)
     ros::Time current_time = ros::Time::now();  
     odom.header.stamp = current_time;  
     odom.header.seq = 0; // 序列号初始化为0或任何你想要的数字  
+    odom.pose.pose.position.x = 10.0;
+    odom.pose.pose.position.y = 1.0;
+    odom.pose.pose.position.z = 0.0;
       
     // 设置其他Odometry消息字段（如位置、速度、方向等）  
     // ...  
