@@ -1,0 +1,11 @@
+<launch>
+
+        <node pkg="targets_control" name="targets_ctrl" type="targets_ctrl" output="screen"/>
+
+
+        <node pkg="targets_control" name="bspline_pub" type="bspline_pub" output="screen"/>
+
+
+
+
+</launch>

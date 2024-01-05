@@ -90,7 +90,7 @@
             <param name="init_x" value="15.0"/>
             <param name="init_y" value="0.0"/>
             <param name="init_z" value="1.0"/>
-            <remap from="~command" to="/target/pos_cmd"/>
+            <remap from="~command" to="/target2_cmd"/>
             <remap from="~odometry" to="/target_odom_2"/>
       </node>
 

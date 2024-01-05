@@ -29,7 +29,7 @@ double time_forward_;
 int  ctrlpts_size = 50;
 
   Eigen::Vector3d startPoint(10.0, 0.0, 1.0);
-  Eigen::Vector3d  moveVector(0.4, 0.0, 0.0);
+  Eigen::Vector3d  moveVector(0.1, -0.4, 0.0);
 
 void bsplineCallback(drone_trajs::BsplineConstPtr msg)
 {
@@ -97,7 +97,7 @@ void bspline()
 
   for (int i = 0; i < ctrlpts_size - 4; ++i)
   {
-    pos_pts(0, i) = startPoint[0] + moveVector[0]*i;
+    pos_pts(0, i) = startPoint[0] + moveVector[0]*i*sin(0.5*i);
     pos_pts(1, i) = startPoint[1] + moveVector[1]*i;
     pos_pts(2, i) = startPoint[2] + moveVector[2]*i;
   }
@@ -226,6 +226,7 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
 
 void cmdCallback(const ros::TimerEvent &e)
 {
+
   /* no publishing before receive traj_ */
   if (!receive_traj_)
     return;
@@ -300,13 +301,13 @@ int main(int argc, char **argv)
   // ros::NodeHandle node;
   ros::NodeHandle nh("~");
 
-  ros::Subscriber bspline_sub = nh.subscribe("/drone_0_planning/bspline", 10, bsplineCallback);
+  //ros::Subscriber bspline_sub = nh.subscribe("/drone_0_planning/bspline", 10, bsplineCallback);
+  bspline();
 
-
-  pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/target1_cmd", 50);
+  pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/target2_cmd", 50);
 
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(0.01), cmdCallback);
-  bspline();
+
   /* control parameter */
   cmd.kx[0] = pos_gain[0];
   cmd.kx[1] = pos_gain[1];
