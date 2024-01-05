@@ -59,7 +59,7 @@ namespace oaguider{
                 data_disp_pub_ = nh.advertise<drone_trajs::DataDisp>("guider/data_display", 100);
 
 
-                waypoint_sub_ = nh.subscribe("/predicted_target", 1, &OagFSM::targetCallback, this);
+                waypoint_sub_ = nh.subscribe("/target_odom_2", 1, &OagFSM::targetCallback, this);
                 ROS_INFO("Wait for 1 second.");
                 int count = 0;
 
@@ -250,7 +250,7 @@ namespace oaguider{
                 data_disp_.header.stamp = ros::Time::now();
                 data_disp_pub_.publish(data_disp_);
                 force_return:;
-                        exec_timer_.start();
+                exec_timer_.start();
         }
 
         //3

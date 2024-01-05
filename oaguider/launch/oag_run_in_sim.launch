@@ -31,6 +31,8 @@
         </node>
 
         <node name="rviz_oag" pkg="rviz" type="rviz" args="-d $(find oa_guider)/launch/sim.rviz" required="true" /> 
+        
+        <node pkg="targets_control" name="targets_ctrl" type="targets_ctrl" output="screen"/>
 
 
         <include file="$(find oa_guider)/launch/simulator.xml">
