@@ -151,11 +151,6 @@ add_executable(targets_ctrl src/targets_ctrl.cpp)
 add_dependencies(targets_ctrl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(targets_ctrl  ${catkin_LIBRARIES} )
 
-
-add_executable(bspline_pub src/bspline_pub.cpp)
-add_dependencies(bspline_pub ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(bspline_pub  ${catkin_LIBRARIES} )
-
 #############
 ## Install ##
 #############
