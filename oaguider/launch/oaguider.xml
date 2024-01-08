@@ -2,12 +2,25 @@
         <arg name="drone_id"/>
         <arg name="odometry_topic"/>
 
-        <node pkg="oa_guider" name="oaguider" type="oaguider" output="screen"/>
-            <remap from="/odom_world" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
+        <arg name="guide_horizon"/>
+        <arg name="max_vel"/>
+        <arg name="max_acc"/>
+
+        <node pkg="oa_guider" name="oaguider" type="oaguider" output="screen">
+
+
+             <param name="fsm/guide_horizon" value="$(arg guide_horizon)" type="double"/> <!--always set to 1.5 times grater than sensing horizen-->
+
+            <param name="guide/maxVel" value="$(arg max_vel)" type="double"/>
+            <param name="guide/maxAcc" value="$(arg max_acc)" type="double"/>
+            <param name="guide/maxJerk" value="4" type="double"/>
+            <!--<remap from="~odom_world" to="$(odometry_topic)"/>-->
 
 
 
 
+
+    </node>
 
 
 

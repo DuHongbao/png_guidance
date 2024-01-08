@@ -4,7 +4,8 @@
         <arg name="map_size_x" value="50.0"/>
         <arg name="map_size_y" value="25.0"/>
         <arg name="map_size_z" value=" 2.0"/>
-        <arg name="odom_topic" value="visual_slam/odom" />
+        <arg name="target2_odom_topic" value="/target_odom_2" />
+        <arg name="odom_topic" value="/odom_world" />
 
         <!--<node pkg ="" name="" type="" output="">
                 <prarm name="" value=""/>
@@ -12,8 +13,14 @@
 
 
     <include file="$(find oa_guider)/launch/oaguider.xml">
+        <arg name="odometry_topic" value="$(arg odom_topic)" />
+
+        <arg name="max_vel" value="2.0" />
+        <arg name="max_acc" value="3.0" />
+
+        <arg name="guide_horizon" value="7.5" />
         <arg name="drone_id" value="$(arg drone_id)"/>
-        <arg name="odometry_topic" value="$(arg odom_topic)"/>
+
 
 
     </include>
@@ -46,7 +53,7 @@
                 <arg name="target_x_" value="12.0"/>
                 <arg name="target_y_" value="0.5"/>
                 <arg name="target_z_" value="1.0"/> 
-                <arg name="odometry_topic" value="$(arg odom_topic)" />
+                <arg name="odometry_topic" value="$(arg target2_odom_topic)" />
         </include>
 
 

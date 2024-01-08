@@ -37,7 +37,7 @@ namespace oaguider
                         int target_type_;
                         double waypoints_[50][3];
                         int waypoint_num_, wp_id_;
-                        double planning_horizon_, planning_horizon_time_;
+                        double guide_horizon_, planning_horizon_time_;
                         double emergency_time_;
                         double no_replan_thresh_, replan_thresh_;
                         bool flag_realworld_experiment_;
@@ -77,7 +77,7 @@ namespace oaguider
                         bool callOaguiderTRAJ(const int trial_times);
                         void planNextWaypoint();
                         void targetCallback(const nav_msgs::OdometryConstPtr &msg);  //change from waypointCallback
-                        Eigen::Vector3d  calculateInterceptPoint(Eigen::Vector3d targetCurrPt, Eigen::Vector3d targetCurVel);
+                        Eigen::Vector3d calculateInterceptPoint(Eigen::Vector3d startPt, Eigen::Vector3d startVel, Eigen::Vector3d targetCurrPt, Eigen::Vector3d targetCurVel);
                         bool GuideFromGlobalTraj(const int trial_times);
                         bool GuideFromCurrentTraj(const int trial_times);
                         void getLocalTarget();

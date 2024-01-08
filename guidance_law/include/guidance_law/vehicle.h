@@ -70,6 +70,7 @@ public:
         Eigen::Vector3d pn_guidance(Eigen::Vector3d r, Eigen::Vector3d vr);
         Eigen::Vector3d opn_guidance(Eigen::Vector3d r, Eigen::Vector3d vr, V3s d, V3s vro);
         void update(double time_d);
+        void targetUpdate(Eigen::Vector3d  targetVel);
         void update(Eigen::Vector3d targ_pos, Eigen::Vector3d targ_vel);
         void update(Eigen::Vector3d targ_pos, Eigen::Vector3d targ_vel,  V3s obs_pos, V3s obs_vel);
         std::vector<Eigen::Vector3d> veh_path();

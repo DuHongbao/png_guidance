@@ -3,8 +3,17 @@
 namespace oaguider{
 
 
-void GuidanceLaw::init(std::string dname, std::string  tname, States D, States T){
+void GuidanceLaw::init(  ros::NodeHandle &nh  , std::string dname, std::string  tname, States D, States T){
         ROS_INFO("GuideLaw Init!");
+
+        ROS_INFO("Set GuideLaw  Parameters!");
+        nh.param("guide/guide_type", guide_type_, -1);
+        nh.param("guide/maxVel",maxVel_, -1.0);
+        nh.param("guide/maxAcc",maxAcc_, -1.0);
+        nh.param("guide/maxJerk",maxJerk_, -1.0);
+        nh.param("guide/N", N_, 3.0);
+        nh.param("guide/sampleFinalTime", tf_, 100.0);
+
         Drone.init(dname,D);
         Target.init(tname, T);
 }
@@ -29,15 +38,6 @@ void  GuidanceLaw::getInterceptedPoint(Eigen::Vector3d  &point){
        point = InterceptedPt_;
 }
 
-void GuidanceLaw::setParam(ros::NodeHandle &nh){
-        ROS_INFO("Set GuideLaw  Parameters!");
-        nh.param("guide/guide_type", guide_type_, -1);
-        nh.param("guide/maxVel",maxVel_, -1.0);
-        nh.param("guide/maxAcc",maxAcc_, -1.0);
-        nh.param("guide/maxJerk",maxJerk_, -1.0);
-        nh.param("guide/N", N_, 3.0);
-        nh.param("guide/sampleFinalTime", tf_, 100.0);
-}
 
 
 void GuidanceLaw::setDroneANDEnvStates(vector<Eigen::Vector3d> &drone, vector<Eigen::Vector3d> &target, vector<Eigen::Vector3d> &obs){
@@ -117,26 +117,39 @@ bool  GuidanceLaw::calcPNGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3
         double t=0.0;
         Eigen::Vector3d  IntePt;
         DTraj.clear();
+        droneTraj_.clear();
         TTraj.clear();
         Eigen::Vector3d D_temp_, T_temp_;
-        while(t<tf_){
-                T.update(t);
+        double distance = (D.states().pos - T.states().pos).norm();
+
+        while(t<100){
+                T.targetUpdate(T.states().vel);
+                //cout<<"T.states().vel:"<<T.states().vel(0)<<" "<<T.states().vel(1)<<" "<<T.states().vel(2)<<endl;
+                //cout<<"T.states().pos:"<<T.states().pos(0)<<" "<<T.states().pos(1)<<" "<<T.states().pos(2)<<endl;
                 D.update(T.states().pos, T.states().vel);
-                double distance = (D.states().pos - T.states().pos).norm();
+                distance = (D.states().pos - T.states().pos).norm();
+                //cout<<"t:"<<t<<", distance:"<<distance<<endl;
                 D.getPos(D_temp_);
                 T.getPos(T_temp_);
                 DTraj.push_back(D_temp_);
+                droneTraj_.push_back(D_temp_);
                 TTraj.push_back(T_temp_);
 
                 if(distance<0.5){
                         std::cout<<"Intercepted at:"<<t<<std::endl;
                         IntePt = D.states().pos;
                         std::cout<<D.states().pos<<std::endl;
-                        return true;
+                        break;
+                        
                 }
-                t+= ST;
+                t+= 0.1;
         }
-        return false;
+        if(distance<0.5){
+                return true;
+        }else{
+                return false;
+        }
+
 }
 
 

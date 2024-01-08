@@ -7,12 +7,12 @@ namespace oaguider{
 
         //1
         void OAGManager::initGuiderModules(ros::NodeHandle &nh, OAGVisualization::Ptr vis ){
-                nh.param("manager/max_vel", gp_.maxVel_, -1.0);
-                nh.param("manager/min_vel", gp_.maxAcc_, -1.0);
-                nh.param("manager/max_jerk", gp_.maxJerk_, -1.0);
+                nh.param("guider/max_vel", gp_.maxVel_, 2.0);
+                nh.param("guider/max_acc", gp_.maxAcc_, 5.0);
+                nh.param("guider/max_jerk", gp_.maxJerk_, 4.0);
                 nh.param("manager/feasibility_tolerance",gp_.feasibility_tolerance_, 0.0);
                 nh.param("manager/control_points_distance", gp_.ctrl_pt_dist, -1.0);
-                nh.param("manager/planning_horizon", gp_.guide_horizen_, 5.0);
+                nh.param("guider/guide_horizon", gp_.guide_horizen_, 5.0);
 
                 
                 local_data_.traj_id_ = 0;
@@ -23,10 +23,11 @@ namespace oaguider{
                 std::string targetID = "paperTiger";
 
                 guide_law_.reset(new GuidanceLaw);
-                guide_law_->init(droneID, targetID, drone, target);
+                //guide_law_->setParam(nh);
+                guide_law_->init(nh, droneID, targetID, drone, target);
                 //guide_law_->setID(droneID, targetID );
                 //guide_law_->setVeh(drone, target);
-                guide_law_->setParam(nh);
+ 
 
                 visualization_ = vis;
         }
@@ -217,7 +218,7 @@ namespace oaguider{
                 vector<Eigen::Vector3d>  DTraj, TTraj;
                 //guide_law_->calcGuideTraj(guide_law_->Drone, guide_law_->Target, guide_law_->droneTraj_, guide_law_->targetTraj_);
                 if (temp_guider.calcPNGuideTraj(drone, target, DTraj, TTraj)){
-                        
+
                         guide_law_->setInterceptedPoint(DTraj.back());
 
                         temp_guider.simplifyToSevenPoints(DTraj);

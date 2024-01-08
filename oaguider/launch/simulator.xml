@@ -19,7 +19,7 @@
 
 
       <!--Fight drone-->
-      <node pkg="poscmd_2_odom" name="poscmd_2_odom" type="poscmd_2_odom" output="screen">
+      <node pkg="poscmd_2_odom" name="fightDrone1_odom" type="poscmd_2_odom" output="screen">
             <param name="init_x" value="$(arg init_x_)"/>
             <param name="init_y" value="$(arg init_y_)"/>
             <param name="init_z" value="$(arg init_z_)"/>
@@ -27,7 +27,7 @@
             <remap from="~odometry" to="/odom_world"/>
       </node>
 
-      <node pkg="odom_visualization" name="odom_visualization" type="odom_visualization" output="screen">
+      <node pkg="odom_visualization" name="fightDrone1_vis" type="odom_visualization" output="screen">
             <remap from="~odom" to="/odom_world"/>
             <param name="color/a" value="1.0"/>    
             <param name="color/r" value="1.0"/>        
@@ -40,7 +40,7 @@
       </node>
 
 
-      <node pkg="poscmd_2_odom" name="drone_2" type="poscmd_2_odom" output="screen">
+      <node pkg="poscmd_2_odom" name="fightDrone2_odom" type="poscmd_2_odom" output="screen">
             <param name="init_x" value="1.0"/>
             <param name="init_y" value="2.0"/>
             <param name="init_z" value="1.0"/>
@@ -48,7 +48,7 @@
             <remap from="~odometry" to="/drone_odom_2"/>
       </node>
 
-      <node pkg="odom_visualization" name="drone_visualization_2" type="odom_visualization" output="screen">
+      <node pkg="odom_visualization" name="fightDrone2_vis" type="odom_visualization" output="screen">
             <remap from="~odom" to="/drone_odom_2"/>
             <param name="color/a" value="1.0"/>    
             <param name="color/r" value="1.0"/>        
@@ -65,7 +65,7 @@
 
       <!--Target drone-->
       <!--id_1-->
-      <node pkg="poscmd_2_odom" name="target_odom_1" type="poscmd_2_odom" output="screen">
+      <node pkg="poscmd_2_odom" name="target1_odom" type="poscmd_2_odom" output="screen">
             <param name="init_x" value="10.0"/>
             <param name="init_y" value="0.0"/>
             <param name="init_z" value="1.0"/>
@@ -73,7 +73,7 @@
             <remap from="~odometry" to="/target_odom_1"/>
       </node>
 
-      <node pkg="odom_visualization" name="target_visualization_1" type="odom_visualization" output="screen">
+      <node pkg="odom_visualization" name="target1_vis" type="odom_visualization" output="screen">
             <remap from="~odom" to="/target_odom_1"/>
             <param name="color/a" value="1.0"/>    
             <param name="color/r" value="0.0"/>        
@@ -86,7 +86,7 @@
       </node>
 
       <!--id_2-->
-      <node pkg="poscmd_2_odom" name="target_odom_2" type="poscmd_2_odom" output="screen">
+      <node pkg="poscmd_2_odom" name="target2_odom" type="poscmd_2_odom" output="screen">
             <param name="init_x" value="15.0"/>
             <param name="init_y" value="0.0"/>
             <param name="init_z" value="1.0"/>
@@ -94,7 +94,7 @@
             <remap from="~odometry" to="/target_odom_2"/>
       </node>
 
-      <node pkg="odom_visualization" name="target_visualization_2" type="odom_visualization" output="screen">
+      <node pkg="odom_visualization" name="target2_vis" type="odom_visualization" output="screen">
             <remap from="~odom" to="/target_odom_2"/>
             <param name="color/a" value="1.0"/>    
             <param name="color/r" value="0.0"/>        
@@ -109,7 +109,7 @@
 
 
 
-  <node pkg="local_sensing_node" type="pcl_render_node" name="drone_$(arg drone_id)_pcl_render_node" output="screen">
+  <node pkg="local_sensing_node" type="pcl_render_node" name="fightDrone1_pcl" output="screen">
         <rosparam command="load" file="$(find local_sensing_node)/params/camera.yaml" />
         <param name="sensing_horizon"  value="5.0" />
         <param name="sensing_rate"     value="30.0"/>

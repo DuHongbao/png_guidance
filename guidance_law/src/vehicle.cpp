@@ -81,6 +81,17 @@ void vehicle::update(double time_d){
         veh_states.pos += veh_states.vel *ST;
 }
 
+
+void vehicle::targetUpdate(Eigen::Vector3d  targetVel){
+
+        veh_states.acc = Eigen::Vector3d::Zero();
+        veh_states.vel = targetVel;
+        veh_states.pos += veh_states.vel *ST;
+
+}
+
+
+
 void vehicle::update(Eigen::Vector3d targ_pos, Eigen::Vector3d targ_vel){
                 Eigen::Vector3d rng;
                 Eigen::Vector3d cv;

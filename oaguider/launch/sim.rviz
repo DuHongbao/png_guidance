@@ -15,20 +15,15 @@ Panels:
         - /drone01/Simulation1/robot1
         - /drone11/Planning1
         - /drone11/Planning1/drone_path1
-        - /drone11/Mapping1
         - /drone11/Mapping1/map inflate1
         - /drone11/Simulation1
         - /drone11/Simulation1/robot1
-        - /drone21
-        - /drone21/Planning1
         - /drone21/Planning1/drone_path1
-        - /drone21/Mapping1
         - /drone21/Mapping1/map inflate1
         - /drone21/Simulation1
         - /drone21/Simulation1/robot1
         - /drone31/Planning1
         - /drone31/Planning1/drone_path1
-        - /drone31/Mapping1
         - /drone31/Mapping1/map inflate1
         - /drone31/Simulation1
         - /drone31/Simulation1/robot1
@@ -52,7 +47,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: map inflate
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -138,7 +133,7 @@ Visualization Manager:
               Marker Topic: /drone_0_ego_planner_node/optimal_list
               Name: optimal_traj
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
               Value: true
             - Class: rviz/Marker
@@ -218,7 +213,7 @@ Visualization Manager:
           Displays:
             - Class: rviz/Marker
               Enabled: true
-              Marker Topic: /odom_visualization/robot
+              Marker Topic: /fightDrone1_vis/robot
               Name: robot
               Namespaces:
                 mesh: true
@@ -345,7 +340,7 @@ Visualization Manager:
           Displays:
             - Class: rviz/Marker
               Enabled: true
-              Marker Topic: /drone_visualization_2/robot
+              Marker Topic: /fightDrone2_vis/robot
               Name: robot
               Namespaces:
                 mesh: true
@@ -472,7 +467,7 @@ Visualization Manager:
           Displays:
             - Class: rviz/Marker
               Enabled: true
-              Marker Topic: /target_visualization_1/robot
+              Marker Topic: /target1_vis/robot
               Name: robot
               Namespaces:
                 mesh: true
@@ -599,7 +594,7 @@ Visualization Manager:
           Displays:
             - Class: rviz/Marker
               Enabled: true
-              Marker Topic: /target_visualization_2/robot
+              Marker Topic: /target2_vis/robot
               Name: robot
               Namespaces:
                 mesh: true
@@ -633,6 +628,14 @@ Visualization Manager:
       Transport Hint: raw
       Unreliable: false
       Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /oaguider/drone_traj
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -660,15 +663,15 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 50.253108978271484
+      Distance: 37.7010383605957
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -6.883955001831055
-        Y: 0.3203401267528534
+        X: -0.28789472579956055
+        Y: -0.3084380328655243
         Z: -9.5367431640625e-7
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806

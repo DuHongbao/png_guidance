@@ -39,7 +39,7 @@ namespace oaguider{
                         vehicle Target;
                         vector<vehicle> Obstacles;
                         PolynomialTraj traj;
-                        ros::Subscriber Obs_sub, Tar_sub, odom_sub,imu_sub;
+                        ros::Subscriber Obs_sub, Tar_sub, odom_sub, imu_sub;
                         double maxVel_, maxAcc_, maxJerk_;
                         static double maxVel;
 
@@ -60,7 +60,8 @@ namespace oaguider{
 
                         ~GuidanceLaw(){};
 
-                        void init(std::string dname, std::string  tname, States D, States T);
+
+                        void init( ros::NodeHandle &nh  , std::string dname, std::string  tname, States D, States T);
                         void setID(std::string dname, std::string  tname);
                         void setVeh(States drone, States target);
                         void  setInterceptedPoint(Eigen::Vector3d  point);

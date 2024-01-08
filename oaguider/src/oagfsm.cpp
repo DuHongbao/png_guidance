@@ -33,6 +33,7 @@ namespace oaguider{
                 nh.param("fsm/flight_type", target_type_, -1);
                 nh.param("fsm/emergency_time", emergency_time_, -1.0);
                 nh.param("fsm/realworld_experimemt", flag_realworld_experiment_,false);
+                nh.param("fsm/guide_horizon", guide_horizon_, 6.5);
                 nh.param("fsm/fail_safe", enable_fail_safe_, true);
                 obstacle_num_ = 0;
                 have_trigger_ = !flag_realworld_experiment_;
@@ -62,6 +63,7 @@ namespace oaguider{
                 waypoint_sub_ = nh.subscribe("/target_odom_2", 1, &OagFSM::targetCallback, this);
                 ROS_INFO("Wait for 1 second.");
                 int count = 0;
+                old_intercept_pt_ << 9999.0, 9999.0, 9999.0  ;
 
 
 
@@ -90,7 +92,8 @@ namespace oaguider{
                 //Eigen::Vector3d object_pt(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
                 end_pt_ = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
                 end_vel_ = Eigen::Vector3d(msg->twist.twist.linear.x, msg->twist.twist.linear.y, msg->twist.twist.linear.z);
-                
+                // end_pt_ = Eigen::Vector3d(0.0, 0.0,1.0);
+                // end_vel_ = Eigen::Vector3d(0.2, 0.3,1.0);
                 //calculateInterceptPoint(object_pt, intercept_pt_);
                 planNextWaypoint();
         }
@@ -99,19 +102,24 @@ namespace oaguider{
         void OagFSM::planNextWaypoint(){
                 bool success = false;
                 Eigen::Vector3d start_pos, start_vel, start_acc, end_acc;
+                start_pos = odom_pos_;
+                start_vel = odom_vel_;
 
-                Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(end_pt_, end_vel_);
+
+                Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(start_pos, start_vel, end_pt_, end_vel_);
 
                 cout<<"end_pt_:"<<end_pt_<<endl;
                 cout<<"end_vel_:"<<end_vel_<<endl;
+                cout<<"intercept_pt_:"<<intercept_pt_<<endl;
 
                 if( (intercept_pt_ - old_intercept_pt_).norm()<0.5 )// if the intercept point not changed;
                 {
+                        cout<<"Tunnel1:"<<endl;
                         success = true;
                 }
                 else{
-                        start_pos = odom_pos_;
-                        start_vel = odom_vel_;
+                        cout<<"Tunnel2:"<<endl;
+
                         start_acc = Eigen::Vector3d::Zero();
 
                         end_acc = Eigen::Vector3d::Zero();
@@ -121,9 +129,10 @@ namespace oaguider{
                 }
 
                 if(success){
-                        
+                        ROS_WARN("Generating global trajectory!");
                         constexpr double step_size_t = 0.1;
                         int i_end = floor(guider_manager_->global_data_.global_duration_ / step_size_t);
+                        cout<<"i_end:"<<i_end<<endl;
                         vector<Eigen::Vector3d> global_traj(i_end);
                         for (int i = 0; i < i_end; i++){
                                 global_traj[i] = guider_manager_->global_data_.global_traj_.evaluate(i * step_size_t);
@@ -142,7 +151,7 @@ namespace oaguider{
                                 }
                                 changeFSMExecState(REPLAN_TRAJ, "TRIG");
                         }
-                        visualization_->displayDroneTraj(global_traj, 0.1, 0);
+                        visualization_->displayDroneTraj(global_traj, 0.5, 0);
                 }else{
                         ROS_ERROR("Unable to generate global trajectory!");
                 }
@@ -151,7 +160,7 @@ namespace oaguider{
         //2
         void OagFSM::execFsmCbk(const ros::TimerEvent &e){
 
-                //printFSMExecState();
+                printFSMExecState();
                 exec_timer_.stop(); // To avoid blockage
                 switch (exec_state_)
                 {
@@ -182,8 +191,9 @@ namespace oaguider{
                                 start_yaw_(0) = atan2(rot_x(1), rot_x(0));
                                 start_yaw_(1) = start_yaw_(2) = 0.0;
 
-
+ 
                                 bool success = GuideFromGlobalTraj(10);
+                                ROS_ERROR("GEN_NEW_TRAJ");
                                 if (success){
                                         changeFSMExecState(EXEC_TRAJ, "FSM");
                                 }else{
@@ -261,6 +271,7 @@ namespace oaguider{
                 start_acc_.setZero();
 
                 for (int i = 0; i < trial_times; i++){
+                ROS_ERROR("GuideFromGlobalTraj");
                 if (callReboundReguide()){
                         return true;
                 }
@@ -301,8 +312,12 @@ namespace oaguider{
 
         //5
         void OagFSM::getLocalTarget(){
-                double t;
-                double t_step = planning_horizon_ /20 /guider_manager_ -> gp_.maxVel_;
+                double t = 0.0;
+                double t_step = guide_horizon_ /20 /guider_manager_ -> gp_.maxVel_;
+                cout<<"guide_horizon_:"<<guide_horizon_<<endl;
+                cout<<"t_step:"<<t_step<<endl;
+                 cout<<"guider_manager_->gp_.maxVel_ :"<<guider_manager_->gp_.maxVel_ <<endl;
+
                 double dist_min = 9999, dist_min_t = 0.0;
                 for(t = guider_manager_->global_data_.last_progress_time_; t < guider_manager_->global_data_.global_duration_; t += t_step){
                         Eigen::Vector3d pos_t = guider_manager_->global_data_.getPosition(t);
@@ -311,24 +326,30 @@ namespace oaguider{
                                 dist_min = dist;
                                 dist_min_t = t;
                         }
-                        if(dist >= planning_horizon_){
+                        if(dist >= guide_horizon_){
                                 local_target_pt_ = pos_t;
                                 guider_manager_  -> global_data_.last_progress_time_ = dist_min_t;
                                 break;
                         }
                 }
 
+
                 if(t > guider_manager_->global_data_.global_duration_){
                         local_target_pt_ = end_pt_;
                         guider_manager_ -> global_data_.last_progress_time_ = guider_manager_ -> global_data_.global_duration_;
                 }
+                ROS_ERROR("getLocalTarget__");
 
-
-                if((end_pt_ - local_target_pt_).norm() < (guider_manager_->gp_.maxVel_ * guider_manager_ -> gp_.maxVel_)/(2*guider_manager_->gp_.maxAcc_) ){
+                cout<<"guider_manager_->gp_.maxVel_ :"<<guider_manager_->gp_.maxVel_ <<"   "<<"guider_manager_->gp_.maxAcc_:"<<guider_manager_->gp_.maxAcc_<<endl;
+                if((end_pt_ - local_target_pt_).norm() < (guider_manager_->gp_.maxVel_ * guider_manager_ -> gp_.maxVel_) / (2*guider_manager_->gp_.maxAcc_) ){
+                                        ROS_ERROR("getLocalTarget____1");
                         local_target_vel_ = Eigen::Vector3d::Zero();
                 }else {
+                        ROS_ERROR("getLocalTarget____2");
                         local_target_vel_ = guider_manager_ -> global_data_.getVelocity(t);
+                                        
                 }
+
 
         }
 
@@ -346,15 +367,21 @@ namespace oaguider{
         }
 
         //7
-        Eigen::Vector3d OagFSM::calculateInterceptPoint(Eigen::Vector3d targetCurrPt, Eigen::Vector3d targetCurVel){
-                States current_drone;
-                States current_target;
+        Eigen::Vector3d OagFSM::calculateInterceptPoint(Eigen::Vector3d startPt, Eigen::Vector3d startVel, Eigen::Vector3d targetCurrPt, Eigen::Vector3d targetCurVel){
+                States current_drone(startPt,startVel,Eigen::Vector3d::Zero());
+                States current_target(targetCurrPt, targetCurVel, Eigen::Vector3d::Zero());
+
+
+                cout<<"startPt:"<<startPt<<endl;
+                cout<<"targetCurrPt:"<<targetCurrPt<<endl;
+
+
                 std::vector<Eigen::Vector3d>  d_traj,t_traj;
                 Eigen::Vector3d InterceptPt;
                 
                  //通过回调函数获取
                 vehicle temp_drone("temp_drone", current_drone);
-                vehicle temp_target("temp_target", current_target);
+                vehicle temp_target("Targat", current_target);
                 
                 GuidanceLaw temp_guider(temp_drone, temp_target);
 
