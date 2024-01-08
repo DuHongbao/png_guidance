@@ -125,7 +125,11 @@ namespace oaguider{
                         end_acc = Eigen::Vector3d::Zero();
 
                         success = guider_manager_->guideGlobalTraj(start_pos, start_vel, start_acc, end_pt_, end_vel_, end_acc);
-                        old_intercept_pt_ = intercept_pt_;
+
+                        ROS_INFO("Guide trajectory %s", success ? "true" : "false");
+                        if(success){
+                                old_intercept_pt_ = intercept_pt_;
+                        }
                 }
 
                 if(success){
