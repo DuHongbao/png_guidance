@@ -219,7 +219,7 @@ namespace oaguider{
 
                                 Eigen::Vector3d pos = info->position_traj_.evaluateDeBoorT(t_cur);
 
-                                ROS_WARN("pos : %d,%d,%d",pos(0),pos(1),pos(2));
+                                ROS_WARN("pos : %f,%f,%f",pos(0),pos(1),pos(2));
 
                                 if( (local_target_pt_ - end_pt_).norm() < 1e-3  ){          // close to the global target        
                                         if (t_cur > info->duration_ - 1e-2){
