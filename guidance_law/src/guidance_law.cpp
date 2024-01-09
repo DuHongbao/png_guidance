@@ -110,7 +110,7 @@ void GuidanceLaw::Eigen2Poly(vector<Eigen::Vector3d> &traj){
         time(0) *= 2.0;
         time(time.rows() - 1) *= 2.0;
         dronePolyTraj = PolynomialTraj::minSnapTraj(pos, Drone.veh_states.vel, end_vel, Drone.veh_states.acc, end_acc, time);
-        cout<<"dronePolyTraj.evaluateVel(0.5):"<<dronePolyTraj.evaluate(0.5)<<endl;
+        //cout<<"dronePolyTraj.evaluateVel(0.5):"<<dronePolyTraj.evaluate(0.5)<<endl;
 }
 
 
@@ -149,9 +149,10 @@ bool  GuidanceLaw::calcPNGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3
                 TTraj.push_back(T_temp_);
 
                 if(distance<0.5){
-                        std::cout<<"Intercepted at:"<<t<<std::endl;
+                        ROS_INFO("Target will intercepted after: %f seconds", t);
+
                         IntePt = D.states().pos;
-                        std::cout<<D.states().pos<<std::endl;
+                        ROS_WARN("D.states().pos: %f, %f, %f", D.states().pos(0),D.states().pos(1),D.states().pos(2));
                         break;
                         
                 }

@@ -382,7 +382,7 @@ int main(int argc, char **argv)
 
         ros::Duration(1.0).sleep();
 
-        ROS_WARN("[Traj server]: ready.");
+        ROS_WARN("[Target Control Server]: ready.");
 
 
         ros::spin();

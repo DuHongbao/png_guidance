@@ -224,15 +224,15 @@ namespace oaguider{
 
                         guide_law_->setInterceptedPoint(DTraj.back());
 
-                        cout<<"DTraj.back():"<<DTraj.back()<<endl;
+                        // cout<<"DTraj.back():"<<DTraj.back()<<endl;
 
                         temp_guider.simplifyToSevenPoints(DTraj);
                         temp_guider.Eigen2Poly(DTraj);
-                        cout<<"DTraj[3]:"<<DTraj[3]<<endl;
+
                         auto time_now = ros::Time::now();
                         global_data_.setGlobalTraj(temp_guider.dronePolyTraj, time_now);
 
-                        cout<<"temp_guider.dronePolyTraj.evaluateVel(0.5):"<<temp_guider.dronePolyTraj.evaluateVel(0.5)<<endl;
+                        //cout<<"temp_guider.dronePolyTraj.evaluateVel(0.5):"<<temp_guider.dronePolyTraj.evaluateVel(0.5)<<endl;
 
                         return true;
                 }
