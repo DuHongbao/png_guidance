@@ -346,6 +346,7 @@ namespace oaguider{
                         //cout<<"guide_horizon_:"<<guide_horizon_<<endl;
                         if(dist >= guide_horizon_){
                                 local_target_pt_ = pos_t;
+                                guider_manager_->local_esti_duration_ = t;
                                 guider_manager_  -> global_data_.last_progress_time_ = dist_min_t;
                                 ROS_WARN("local_target_pt__1: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
                                 break;
@@ -355,6 +356,7 @@ namespace oaguider{
 
                 if(t > guider_manager_->global_data_.global_duration_){
                         local_target_pt_ = end_pt_;
+                        guider_manager_->local_esti_duration_ = t;
                         ROS_WARN("local_target_pt__2: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
                         guider_manager_ -> global_data_.last_progress_time_ = guider_manager_ -> global_data_.global_duration_;
                 }
@@ -377,9 +379,16 @@ namespace oaguider{
 
         //6
         bool OagFSM::callReboundReguide(){
+
                 ROS_WARN("callReboundReguide()");
+
                 getLocalTarget();
-                //bool plan_and_refine_success =  guider_manager_->reboundReguide();
+
+                bool plan_and_refine_success =  guider_manager_->reboundReguide(start_pt_, start_vel_, start_acc_, local_target_pt_, local_target_vel_);
+
+        //bool reboundReguide(Eigen::Vector3d start_pt, 
+        //Eigen::Vector3d start_vel, Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,Eigen::Vector3d local_target_vel){
+
                 auto info = &guider_manager_->local_data_;
                 drone_trajs::Bspline bspline;
                 /* 1. publish traj to traj_server */

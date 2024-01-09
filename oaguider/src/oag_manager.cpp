@@ -35,6 +35,8 @@ namespace oaguider{
         //2
         bool OAGManager::reboundReguide(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
                                         Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,Eigen::Vector3d local_target_vel){
+
+                ROS_WARN("reboundReguide()");
                 static int count = 0;
 
                 if((start_pt - local_target_pt).norm() < 0.2){
@@ -42,7 +44,7 @@ namespace oaguider{
                         continous_failures_count_++;
                         return false;
                 }
-
+                ROS_WARN("reboundReguide()__");
                 ros::Time t_start = ros::Time::now();
                 ros::Duration t_init, t_guide, t_refine;
 
@@ -50,8 +52,8 @@ namespace oaguider{
                 vector<Eigen::Vector3d> drone;
                 vector<Eigen::Vector3d> target;
                 vector<Eigen::Vector3d> obstacles;
-
-                guide_law_->setDroneANDEnvStates(drone, target, obstacles);
+                ROS_WARN("ts:%f",ts);
+                //guide_law_->setDroneANDEnvStates(drone, target, obstacles);
                 //guide_law_->plan();
 
                 vector<Eigen::Vector3d> point_set, start_end_derivatives;
@@ -64,7 +66,7 @@ namespace oaguider{
                         start_end_derivatives.clear();
                         flag_regenerate = false;
 
-                        // Intial path  generated from a min-snaptraj by older.
+                        // Intial path  generated from a min-snap traj by older.
                         if(flag_first_call || flag_force_polynomial){
                                 flag_first_call = false;
                                 flag_force_polynomial = false;
@@ -74,20 +76,26 @@ namespace oaguider{
                                 double time = pow(gp_.maxVel_, 2) / gp_.maxAcc_ > dist ? 
                                 sqrt(dist / gp_.maxAcc_)
                                  : (dist - pow(gp_.maxVel_, 2) / gp_.maxAcc_) / gp_.maxVel_ + 2 * gp_.maxVel_ / gp_.maxAcc_;
+                                
+                                
+                                Eigen::MatrixXd pos(3, 3);
+                                Eigen::VectorXd local_t;
 
 
-                                gl_traj = GuidanceLaw::guidePNTraj(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
+                                ROS_WARN("local_esti_duration_ %f: ", local_esti_duration_);
+                                ROS_WARN("global_duration_ %f: ", global_data_.global_duration_);
 
                                 double t;
                                 bool flag_too_far;
-                                ts *=1.5;
+                                ts *= 1.5;
                                 do{
+
                                         ts /= 1.5;
                                         point_set.clear();
-                                        flag_too_far = false;
-                                        Eigen::Vector3d  last_pt = gl_traj.evaluate(0);
-                                        for(t = 0; t < time; t+=ts){
-                                                Eigen::Vector3d pt = gl_traj.evaluate(t);
+                                        flag_too_far = false;  
+                                        Eigen::Vector3d  last_pt = global_data_.global_traj_.evaluate(0);                                      
+                                        for(t = 0; t < local_esti_duration_; t+=ts){
+                                                Eigen::Vector3d pt = global_data_.global_traj_.evaluate(t);
                                                 double points_dist = (last_pt - pt).norm();
                                                 if(points_dist > gp_.ctrl_pt_dist * 1.5){
                                                         flag_too_far = true;
@@ -95,14 +103,41 @@ namespace oaguider{
                                                 }
                                                 last_pt = pt;
                                                 point_set.push_back(pt);
+
                                         }
                                 }while(flag_too_far);
 
+
+                                cout<<"______________________"<<endl;
+                                //gl_traj = GuidanceLaw::guidePNTraj(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
+                                //gl_traj = PolynomialTraj::minSnapTraj(pos, start_vel, local_target_vel, start_acc, Eigen::Vector3d::Zero(), local_t);
+
+                                
+                                
+                                // ts *= 1.5;
+                                // do{
+                                //         ts /= 1.5;
+                                //         point_set.clear();
+                                //         flag_too_far = false;
+                                //         Eigen::Vector3d  last_pt = gl_traj.evaluate(0);
+                                //         for(t = 0; t < time; t+=ts){
+                                //                 Eigen::Vector3d pt = gl_traj.evaluate(t);
+                                //                 double points_dist = (last_pt - pt).norm();
+                                //                 if(points_dist > gp_.ctrl_pt_dist * 1.5){
+                                //                         flag_too_far = true;
+                                //                         break;
+                                //                 }
+                                //                 last_pt = pt;
+                                //                 point_set.push_back(pt);
+                                //         }
+                                // }while(flag_too_far);
+
                                 t -= ts;
-                                start_end_derivatives.push_back(gl_traj.evaluateVel(0));
+                                start_end_derivatives.push_back(global_data_.global_traj_.evaluateVel(0));
                                 start_end_derivatives.push_back(local_target_vel);
-                                start_end_derivatives.push_back(gl_traj.evaluateAcc(0));
-                                start_end_derivatives.push_back(gl_traj.evaluateAcc(t));
+                                start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(0));
+                                start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(t));
+                                cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
 
                         
                         }else{
@@ -118,7 +153,7 @@ namespace oaguider{
                                         segment_point.push_back(local_data_.position_traj_.evaluateDeBoorT(t));
                                         //cout<<"t:"<<t<<"  local_data_.duration_"<<local_data_.duration_<<endl;
                                         if (t > t_cur){
-                                        pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
+                                                pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
                                         }
                                 }
                                 cout<<"t:"<<t<<endl;
@@ -146,21 +181,21 @@ namespace oaguider{
                                 size_t id = 0;
                                 do
                                 {
-                                cps_dist /= 1.5;
-                                point_set.clear();
-                                sample_length = 0;
-                                id = 0;
-                                while ((id <= pseudo_arc_length.size() - 2) && sample_length <= pseudo_arc_length.back())
-                                {
-                                if (sample_length >= pseudo_arc_length[id] && sample_length < pseudo_arc_length[id + 1])
-                                {
-                                point_set.push_back((sample_length - pseudo_arc_length[id]) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id + 1] +
-                                                        (pseudo_arc_length[id + 1] - sample_length) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id]);
-                                sample_length += cps_dist;
-                                }
-                                else
-                                id++;
-                                }
+                                        cps_dist /= 1.5;
+                                        point_set.clear();
+                                        sample_length = 0;
+                                        id = 0;
+                                        while ((id <= pseudo_arc_length.size() - 2) && sample_length <= pseudo_arc_length.back())
+                                        {
+                                                if (sample_length >= pseudo_arc_length[id] && sample_length < pseudo_arc_length[id + 1])
+                                                {
+                                                        point_set.push_back((sample_length - pseudo_arc_length[id]) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id + 1] +
+                                                                                (pseudo_arc_length[id + 1] - sample_length) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id]);
+                                                        sample_length += cps_dist;
+                                                }
+                                                else
+                                                        id++;
+                                        }
                                 //point_set.push_back(local_target_pt);
 
                                 } while (point_set.size() < 7); // If the start point is very close to end point, this will help
@@ -173,8 +208,8 @@ namespace oaguider{
 
                                 if (point_set.size() > gp_.guide_horizen_ / gp_.ctrl_pt_dist * 3) // The initial path is unnormally too long!
                                 {
-                                flag_force_polynomial = true;
-                                flag_regenerate = true;
+                                        flag_force_polynomial = true;
+                                        flag_regenerate = true;
                                 }
 
                         }

@@ -72,7 +72,8 @@
                 "typeindex": "cpp",
                 "*.ipp": "cpp",
                 "hash_map": "cpp",
-                "hash_set": "cpp"
+                "hash_set": "cpp",
+                "specialfunctions": "cpp"
         },
         "C_Cpp.errorSquiggles": "disabled"
 }

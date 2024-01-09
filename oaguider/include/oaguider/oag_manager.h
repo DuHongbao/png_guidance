@@ -36,6 +36,7 @@ class OAGManager{
         public:
                 GuideParammeters gp_;
                 LocalTrajData local_data_;
+                double local_esti_duration_;
                 GlobalTrajData global_data_;
                 GuidanceLaw::Ptr guide_law_;
 
