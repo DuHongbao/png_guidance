@@ -67,7 +67,8 @@ namespace oaguider{
                         void  setInterceptedPoint(Eigen::Vector3d  point);
                         void  getInterceptedPoint(Eigen::Vector3d  &point);
 
-                        void setParam(ros::NodeHandle &nh);
+                        //void setParam(ros::NodeHandle &nh);
+                        void setParam(double Vel, double Acc, double Jerk, double N);
                         void setDroneANDEnvStates(vector<Eigen::Vector3d> &drone, vector<Eigen::Vector3d> &target, vector<Eigen::Vector3d> &obs);
                         void plan();
                         void Eigen2Poly(vector<Eigen::Vector3d> &traj);

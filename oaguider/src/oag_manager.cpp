@@ -7,12 +7,12 @@ namespace oaguider{
 
         //1
         void OAGManager::initGuiderModules(ros::NodeHandle &nh, OAGVisualization::Ptr vis ){
-                nh.param("guider/max_vel", gp_.maxVel_, 2.0);
-                nh.param("guider/max_acc", gp_.maxAcc_, 5.0);
-                nh.param("guider/max_jerk", gp_.maxJerk_, 4.0);
-                nh.param("manager/feasibility_tolerance",gp_.feasibility_tolerance_, 0.0);
-                nh.param("manager/control_points_distance", gp_.ctrl_pt_dist, -1.0);
-                nh.param("guider/guide_horizon", gp_.guide_horizen_, 5.0);
+                nh.param("guide/max_vel", gp_.maxVel_, 2.0);
+                nh.param("guide/max_acc", gp_.maxAcc_, 3.0);
+                nh.param("guide/max_jerk", gp_.maxJerk_, 4.0);
+                nh.param("guide/feasibility_tolerance", gp_.feasibility_tolerance_, 0.05);
+                nh.param("guide/control_points_distance", gp_.ctrl_pt_dist, 0.4);
+                nh.param("guide/guide_horizon", gp_.guide_horizen_, 5.0);
 
                 
                 local_data_.traj_id_ = 0;
@@ -214,6 +214,9 @@ namespace oaguider{
                 vehicle  target("temp_target", TState);
 
                 GuidanceLaw temp_guider(drone, target);
+                //temp_guider.reset(new GuidanceLaw);
+                //temp_guider->init(nh, droneID, targetID, drone, target);
+                temp_guider.setParam(gp_.maxVel_, gp_.maxAcc_, gp_.maxJerk_, 3.0);
 
                 vector<Eigen::Vector3d>  DTraj, TTraj;
                 //guide_law_->calcGuideTraj(guide_law_->Drone, guide_law_->Target, guide_law_->droneTraj_, guide_law_->targetTraj_);
@@ -221,10 +224,15 @@ namespace oaguider{
 
                         guide_law_->setInterceptedPoint(DTraj.back());
 
+                        cout<<"DTraj.back():"<<DTraj.back()<<endl;
+
                         temp_guider.simplifyToSevenPoints(DTraj);
                         temp_guider.Eigen2Poly(DTraj);
+                        cout<<"DTraj[3]:"<<DTraj[3]<<endl;
                         auto time_now = ros::Time::now();
                         global_data_.setGlobalTraj(temp_guider.dronePolyTraj, time_now);
+
+                        cout<<"temp_guider.dronePolyTraj.evaluateVel(0.5):"<<temp_guider.dronePolyTraj.evaluateVel(0.5)<<endl;
 
                         return true;
                 }

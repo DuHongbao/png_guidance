@@ -140,6 +140,7 @@ namespace oaguider{
                         vector<Eigen::Vector3d> global_traj(i_end);
                         for (int i = 0; i < i_end; i++){
                                 global_traj[i] = guider_manager_->global_data_.global_traj_.evaluate(i * step_size_t);
+                                //cout<<"global_traj:"<<global_traj[i]<<endl;
                         }
                         
                         end_vel_.setZero();
@@ -323,16 +324,23 @@ namespace oaguider{
                  cout<<"guider_manager_->gp_.maxVel_ :"<<guider_manager_->gp_.maxVel_ <<endl;
 
                 double dist_min = 9999, dist_min_t = 0.0;
+                cout<<"guider_manager_->global_data_.last_progress_time_"<< guider_manager_->global_data_.last_progress_time_ <<endl;
+                cout<<"guider_manager_->global_data_.global_duration_"<<guider_manager_->global_data_.global_duration_<<endl;
                 for(t = guider_manager_->global_data_.last_progress_time_; t < guider_manager_->global_data_.global_duration_; t += t_step){
                         Eigen::Vector3d pos_t = guider_manager_->global_data_.getPosition(t);
+                        cout<<"start_pt_:"<<start_pt_<<"    pos_t:"<<pos_t<<endl;
                         double dist = (pos_t - start_pt_).norm();
+                        cout<<"t:"<<t<<endl;
                         if(dist < dist_min){
                                 dist_min = dist;
                                 dist_min_t = t;
                         }
+                        cout<<"dist:"<<dist<<endl;
+                        cout<<"guide_horizon_:"<<guide_horizon_<<endl;
                         if(dist >= guide_horizon_){
                                 local_target_pt_ = pos_t;
                                 guider_manager_  -> global_data_.last_progress_time_ = dist_min_t;
+                                cout<<"local_target_pt__1:"<< local_target_pt_ <<endl;
                                 break;
                         }
                 }
@@ -340,17 +348,19 @@ namespace oaguider{
 
                 if(t > guider_manager_->global_data_.global_duration_){
                         local_target_pt_ = end_pt_;
+                        cout<<"local_target_pt__2:"<< local_target_pt_ <<endl;
                         guider_manager_ -> global_data_.last_progress_time_ = guider_manager_ -> global_data_.global_duration_;
                 }
-                ROS_ERROR("getLocalTarget__");
+
 
                 cout<<"guider_manager_->gp_.maxVel_ :"<<guider_manager_->gp_.maxVel_ <<"   "<<"guider_manager_->gp_.maxAcc_:"<<guider_manager_->gp_.maxAcc_<<endl;
                 if((end_pt_ - local_target_pt_).norm() < (guider_manager_->gp_.maxVel_ * guider_manager_ -> gp_.maxVel_) / (2*guider_manager_->gp_.maxAcc_) ){
-                                        ROS_ERROR("getLocalTarget____1");
+                        ROS_ERROR("getLocalTarget____1");
                         local_target_vel_ = Eigen::Vector3d::Zero();
                 }else {
                         ROS_ERROR("getLocalTarget____2");
                         local_target_vel_ = guider_manager_ -> global_data_.getVelocity(t);
+                        cout<< "local_target_vel_ : "<<local_target_vel_<<endl;
                                         
                 }
 

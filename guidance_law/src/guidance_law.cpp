@@ -18,6 +18,14 @@ void GuidanceLaw::init(  ros::NodeHandle &nh  , std::string dname, std::string  
         Target.init(tname, T);
 }
 
+void GuidanceLaw::setParam(double Vel, double Acc, double Jerk, double N){
+        maxVel_ = Vel;
+        maxAcc_ = Acc;
+        maxJerk_ = Jerk;
+        N_ = N;
+}
+
+
 void GuidanceLaw::setID(std::string dname, std::string  tname){
         Drone.setVehicleID(dname);
         Target.setVehicleID(tname);
@@ -87,17 +95,22 @@ void GuidanceLaw::plan(){
 void GuidanceLaw::Eigen2Poly(vector<Eigen::Vector3d> &traj){
         Eigen::MatrixXd pos(3, traj.size());
         Eigen::VectorXd time(traj.size() - 1);
-        Eigen::Vector3d end_vel(0.0, 0.0, 0.0), end_acc(0.0, 0.0, 0.0);
+        Eigen::Vector3d end_vel = Eigen::Vector3d::Zero();
+        Eigen::Vector3d end_acc = Eigen::Vector3d::Zero();
 
         for (int i = 0; i < traj.size(); i++)
                 {pos.col(i) = traj[i];}
                         
-        for (int i = 0; i < traj.size()/ - 1; i++)
-                {time(i) = (pos.col(i + 1) - pos.col(i)).norm() / maxVel_;}
+        for (int i = 0; i < traj.size() - 1; i++)
+                {time(i) = (pos.col(i + 1) - pos.col(i)).norm() / maxVel_;
+                cout<<"maxVel_:"<<maxVel_<<endl;}
+        
+
 
         time(0) *= 2.0;
         time(time.rows() - 1) *= 2.0;
         dronePolyTraj = PolynomialTraj::minSnapTraj(pos, Drone.veh_states.vel, end_vel, Drone.veh_states.acc, end_acc, time);
+        cout<<"dronePolyTraj.evaluateVel(0.5):"<<dronePolyTraj.evaluate(0.5)<<endl;
 }
 
 
