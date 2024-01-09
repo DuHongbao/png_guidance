@@ -137,7 +137,11 @@ namespace oaguider{
                                 start_end_derivatives.push_back(local_target_vel);
                                 start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(0));
                                 start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(t));
+                                
                                 cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+                                for(int i = 0; i<point_set.size();i++){
+                                        ROS_INFO("point_set[i]%f, %f, %f",  point_set[i](0), point_set[i](1), point_set[i](2));
+                                }
 
                         
                         }else{
