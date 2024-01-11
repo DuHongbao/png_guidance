@@ -144,11 +144,13 @@ void planNextWaypoint(const Eigen::Vector3d next_wp)
         }
         else if ((end_pt_ - pos).norm() > no_replan_thresh_ && t_cur > replan_thresh_)
         {
+          ROS_WARN("TUNNEL 1!");
           changeFSMExecState(REPLAN_TRAJ, "FSM");
         }
       }
       else if (t_cur > replan_thresh_)
       {
+        ROS_WARN("TUNNEL 2!");
         changeFSMExecState(REPLAN_TRAJ, "FSM");
       }
 

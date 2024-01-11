@@ -36,15 +36,16 @@ namespace oaguider{
         bool OAGManager::reboundReguide(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
                                         Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,Eigen::Vector3d local_target_vel){
 
-                ROS_WARN("reboundReguide()");
+                //ROS_WARN("reboundReguide()");
+                
                 static int count = 0;
-
+                printf("\033[47;30m\n[drone replan %d]==============================================\033[0m\n",count++);
                 if((start_pt - local_target_pt).norm() < 0.2){
                         cout << "Close to goal" << endl;
                         continous_failures_count_++;
                         return false;
                 }
-                ROS_WARN("reboundReguide()__");
+                //ROS_WARN("reboundReguide()__");
                 ros::Time t_start = ros::Time::now();
                 ros::Duration t_init, t_guide, t_refine;
 
@@ -52,7 +53,7 @@ namespace oaguider{
                 vector<Eigen::Vector3d> drone;
                 vector<Eigen::Vector3d> target;
                 vector<Eigen::Vector3d> obstacles;
-                ROS_WARN("ts:%f",ts);
+                //ROS_WARN("ts:%f",ts);
                 //guide_law_->setDroneANDEnvStates(drone, target, obstacles);
                 //guide_law_->plan();
 
@@ -82,8 +83,8 @@ namespace oaguider{
                                 Eigen::VectorXd local_t;
 
 
-                                ROS_WARN("local_esti_duration_ %f: ", local_esti_duration_);
-                                ROS_WARN("global_duration_ %f: ", global_data_.global_duration_);
+                                //ROS_WARN("local_esti_duration_ %f: ", local_esti_duration_);
+                                //ROS_WARN("global_duration_ %f: ", global_data_.global_duration_);
 
                                 double t;
                                 bool flag_too_far;
@@ -136,9 +137,9 @@ namespace oaguider{
                                 start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(0));
                                 start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(t));
 
-                                for(int i = 0; i<point_set.size();i++){
-                                        ROS_INFO("point_set[i]%f, %f, %f",  point_set[i](0), point_set[i](1), point_set[i](2));
-                                }
+                                // for(int i = 0; i<point_set.size();i++){
+                                //         ROS_INFO("point_set[i]%f, %f, %f",  point_set[i](0), point_set[i](1), point_set[i](2));
+                                // }
 
                         
                         }else{
@@ -158,7 +159,6 @@ namespace oaguider{
                                                 pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
                                         }
                                 }
-                                cout<<"t:"<<t<<endl;
                                 t -= ts;
                                 double poly_time = (local_data_.position_traj_.evaluateDeBoorT(t) - local_target_pt).norm() / gp_.maxVel_ * 2.0;
                                 if (poly_time > ts){
@@ -230,7 +230,7 @@ namespace oaguider{
 
                 Eigen::MatrixXd ctrl_pts, ctrl_pts_temp;
                 UniformBspline::parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
-                ROS_WARN("ctrl_pts.size(): %d", ctrl_pts.cols());
+                //ROS_WARN("ctrl_pts.size(): %d", ctrl_pts.cols());
                 UniformBspline pos = UniformBspline(ctrl_pts, 3, ts);
                 pos.setPhysicalLimits(gp_.maxVel_, gp_.maxAcc_, gp_.feasibility_tolerance_);
 
@@ -241,7 +241,7 @@ namespace oaguider{
                 static int count_success = 0;
                 sum_time += (t_init + t_guide + t_refine).toSec();
                 count_success++;
-                cout << "total time:\033[42m" << (t_init + t_guide + t_refine).toSec() << "\033[0m,optimize:" << (t_init + t_guide).toSec() << ",refine:" << t_refine.toSec() << ",avg_time=" << sum_time / count_success << endl;
+                //cout << "total time:\033[42m" << (t_init + t_guide + t_refine).toSec() << "\033[0m,optimize:" << (t_init + t_guide).toSec() << ",refine:" << t_refine.toSec() << ",avg_time=" << sum_time / count_success << endl;
 
                 continous_failures_count_ = 0;
                 return true;

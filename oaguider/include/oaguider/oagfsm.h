@@ -63,7 +63,7 @@ namespace oaguider
 
                         /*ROS utils*/
                         ros::NodeHandle node_;
-                        ros::Timer exec_timer_, safety_timer_;
+                        ros::Timer exec_timer_, safety_timer_,target_timer_;
                         ros::Subscriber intercept_point_sub_, odom_sub_, waypoint_sub_, trigger_sub_; 
                         ros::Publisher replan_pub_, new_pub_, bspline_pub_, data_disp_pub_;
 

@@ -59,7 +59,7 @@ void OAGVisualization::displayDroneTraj(vector<Eigen::Vector3d> init_pts, const 
         if(Drone_traj_pub.getNumSubscribers() == 0){
                 return;
         }
-        Eigen::Vector4d color(1, 0.1, 0.1, 1);
+        Eigen::Vector4d color(1, 1.0, 0.1, 0);
         displayMarkerList(Drone_traj_pub, init_pts,scale, color, id);
 }
 
@@ -77,7 +77,7 @@ void OAGVisualization::displayDroneTraj(vector<Eigen::Vector3d> init_pts, const 
       Eigen::Vector3d pt = optimal_pts.col(i).transpose();
       list.push_back(pt);
     }
-    Eigen::Vector4d color(1, 0, 0, 1);
+    Eigen::Vector4d color(0.5, 1, 0, 0);
     displayMarkerList(MatrixXd_traj_pub, list, 0.15, color, id);
   }
 

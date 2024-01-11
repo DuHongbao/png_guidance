@@ -101,9 +101,10 @@ void GuidanceLaw::Eigen2Poly(vector<Eigen::Vector3d> &traj){
         for (int i = 0; i < traj.size(); i++)
                 {pos.col(i) = traj[i];}
                         
-        for (int i = 0; i < traj.size() - 1; i++)
-                {time(i) = (pos.col(i + 1) - pos.col(i)).norm() / maxVel_;
-                cout<<"maxVel_:"<<maxVel_<<endl;}
+        for (int i = 0; i < traj.size() - 1; i++){
+                time(i) = (pos.col(i + 1) - pos.col(i)).norm() / maxVel_;
+                //cout<<"maxVel_:"<<maxVel_<<endl;
+        }
         
 
 

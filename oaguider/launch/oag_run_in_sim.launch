@@ -14,7 +14,7 @@
 
 
     <node pkg="targets_control" name="targets_ctrl" type="targets_ctrl" output="screen"/>
-    
+     <node pkg="targets_predict" name="targets_predict" type="targets_predict" output="screen"/>
     <include file="$(find oa_guider)/launch/oaguider.xml">
         <arg name="odometry_topic" value="$(arg odom_topic)" />
 

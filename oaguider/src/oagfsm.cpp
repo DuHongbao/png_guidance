@@ -34,6 +34,8 @@ namespace oaguider{
                 nh.param("fsm/emergency_time", emergency_time_, -1.0);
                 nh.param("fsm/realworld_experimemt", flag_realworld_experiment_,false);
                 nh.param("fsm/guide_horizon", guide_horizon_, 6.5);
+                nh.param("fsm/thresh_no_replan_meter", no_replan_thresh_, 1.0);
+                nh.param("fsm/thresh_replan_time", replan_thresh_, 1.0);
                 nh.param("fsm/fail_safe", enable_fail_safe_, true);
                 obstacle_num_ = 0;
                 have_trigger_ = !flag_realworld_experiment_;
@@ -60,7 +62,9 @@ namespace oaguider{
                 data_disp_pub_ = nh.advertise<drone_trajs::DataDisp>("guider/data_display", 100);
 
 
-                waypoint_sub_ = nh.subscribe("/target_odom_2", 1, &OagFSM::targetCallback, this);
+
+                //target_timer_ = nh.createTimer(ros::Duration(0.2), &OagFSM::targetCallback, this);
+                waypoint_sub_ = nh.subscribe("/target2_pred", 1, &OagFSM::targetCallback, this);
                 ROS_INFO("Wait for 1 second.");
                 int count = 0;
                 old_intercept_pt_ << 9999.0, 9999.0, 9999.0  ;
@@ -108,11 +112,11 @@ namespace oaguider{
 
                 Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(start_pos, start_vel, end_pt_, end_vel_);
 
-                ROS_INFO("end_pt_: %f, %f, %f", end_pt_[0],end_pt_(1), end_pt_(2));
-                ROS_INFO("end_vel_: %f, %f, %f", end_vel_(0),end_vel_(1), end_vel_(2));
-                ROS_WARN("intercept_pt_: %f, %f, %f", intercept_pt_(0),intercept_pt_(1), intercept_pt_(2));
+                //ROS_INFO("end_pt_: %f, %f, %f", end_pt_[0],end_pt_(1), end_pt_(2));
+                //ROS_INFO("end_vel_: %f, %f, %f", end_vel_(0),end_vel_(1), end_vel_(2));
+                //ROS_WARN("intercept_pt_: %f, %f, %f", intercept_pt_(0),intercept_pt_(1), intercept_pt_(2));
 
-                if( (intercept_pt_ - old_intercept_pt_).norm()<0.5 )// if the intercept point not changed;
+                if( (intercept_pt_ - old_intercept_pt_).norm()<1.5 )// if the intercept point not changed;
                 {
                         cout<<"Tunnel1:"<<endl;
                         success = true;
@@ -126,7 +130,7 @@ namespace oaguider{
 
                         success = guider_manager_->guideGlobalTraj(start_pos, start_vel, start_acc, end_pt_, end_vel_, end_acc);
 
-                        ROS_INFO("Guide trajectory %s", success ? "true" : "false");
+                        //ROS_INFO("Guide trajectory %s", success ? "true" : "false");
                         if(success){
                                 old_intercept_pt_ = intercept_pt_;
                         }
@@ -136,7 +140,7 @@ namespace oaguider{
                         ROS_WARN("Generating global trajectory!");
                         constexpr double step_size_t = 0.1;
                         int i_end = floor(guider_manager_->global_data_.global_duration_ / step_size_t);
-                        cout<<"i_end:"<<i_end<<endl;
+                        //cout<<"i_end:"<<i_end<<endl;
                         vector<Eigen::Vector3d> global_traj(i_end);
                         for (int i = 0; i < i_end; i++){
                                 global_traj[i] = guider_manager_->global_data_.global_traj_.evaluate(i * step_size_t);
@@ -154,6 +158,8 @@ namespace oaguider{
                                         ros::spinOnce();
                                         ros::Duration(0.001).sleep();
                                 }
+
+                                ROS_WARN("TUNNEL3!");
                                 changeFSMExecState(REPLAN_TRAJ, "TRIG");
                         }
                         visualization_->displayDroneTraj(global_traj, 0.5, 0);
@@ -179,6 +185,7 @@ namespace oaguider{
                                 changeFSMExecState(WAIT_TARGET, "FSM");
                                 break;
                         }
+
                         case WAIT_TARGET:{
                                 //cout<<"have_target_:"<<have_target_<<" have_trigger_:"<<have_trigger_<<endl;
                                 if (!have_target_ || !have_trigger_)
@@ -196,7 +203,7 @@ namespace oaguider{
                                 start_yaw_(0) = atan2(rot_x(1), rot_x(0));
                                 start_yaw_(1) = start_yaw_(2) = 0.0;
 
-                                ROS_WARN("GEN_NEW_TRAJ");
+                                //ROS_WARN("GEN_NEW_TRAJ");
                                 bool success = GuideFromGlobalTraj(10);
 
                                 if (success){
@@ -214,7 +221,7 @@ namespace oaguider{
 
                                 t_cur = min(info->duration_, t_cur);
 
-                                ROS_WARN("EXEC_TRAJ");
+                                //ROS_WARN("EXEC_TRAJ");
 
                                 Eigen::Vector3d pos = info->position_traj_.evaluateDeBoorT(t_cur);
 
@@ -231,9 +238,12 @@ namespace oaguider{
                                                 }
                                                 else if ((end_pt_ - pos).norm() > no_replan_thresh_ && t_cur > replan_thresh_)
                                                 {
+                                                        ROS_WARN("TUNNEL 1!");
                                                         changeFSMExecState(REPLAN_TRAJ, "FSM");
                                                 }
-                                }else if( t_cur > replan_thresh_ ){      
+                                }else if( t_cur > replan_thresh_ ){     
+                                        ROS_WARN("TUNNEL 2! %f",replan_thresh_);
+
                                         changeFSMExecState(REPLAN_TRAJ, "FSM");
                                 }
 
@@ -246,6 +256,7 @@ namespace oaguider{
                                 }
                                 else
                                 {
+                                         ROS_WARN("TUNNEL 4! %f",replan_thresh_);
                                         changeFSMExecState(REPLAN_TRAJ, "FSM");
                                 }
                                 break;
@@ -268,7 +279,8 @@ namespace oaguider{
 
                 data_disp_.header.stamp = ros::Time::now();
                 data_disp_pub_.publish(data_disp_);
-                force_return:;
+
+        force_return:;
                 exec_timer_.start();
         }
 
@@ -280,9 +292,9 @@ namespace oaguider{
                 start_acc_.setZero();
 
                 for (int i = 0; i < trial_times; i++){
-                        ROS_WARN("GuideFromGlobalTraj");
+                        //ROS_WARN("GuideFromGlobalTraj");
                         if (callReboundReguide()){
-                                ROS_WARN("True");
+                                //ROS_WARN("True");
                                 return true;
                         }
                 }
@@ -330,8 +342,8 @@ namespace oaguider{
                  //cout<<"guider_manager_->gp_.maxVel_ :"<<guider_manager_->gp_.maxVel_ <<endl;
 
                 double dist_min = 9999, dist_min_t = 0.0;
-                cout<<"guider_manager_->global_data_.last_progress_time_"<< guider_manager_->global_data_.last_progress_time_ <<endl;
-                cout<<"guider_manager_->global_data_.global_duration_"<<guider_manager_->global_data_.global_duration_<<endl;
+                //cout<<"guider_manager_->global_data_.last_progress_time_"<< guider_manager_->global_data_.last_progress_time_ <<endl;
+                //cout<<"guider_manager_->global_data_.global_duration_"<<guider_manager_->global_data_.global_duration_<<endl;
                 for(t = guider_manager_->global_data_.last_progress_time_; t < guider_manager_->global_data_.global_duration_; t += t_step){
                         Eigen::Vector3d pos_t = guider_manager_->global_data_.getPosition(t);
                         //cout<<"start_pt_:"<<start_pt_<<"    pos_t:"<<pos_t<<endl;
@@ -347,7 +359,7 @@ namespace oaguider{
                                 local_target_pt_ = pos_t;
                                 guider_manager_->local_esti_duration_ = t;
                                 guider_manager_  -> global_data_.last_progress_time_ = dist_min_t;
-                                ROS_WARN("local_target_pt__1: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
+                                //ROS_WARN("local_target_pt__1: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
                                 break;
                         }
                 }
@@ -356,20 +368,20 @@ namespace oaguider{
                 if(t > guider_manager_->global_data_.global_duration_){
                         local_target_pt_ = end_pt_;
                         guider_manager_->local_esti_duration_ = t;
-                        ROS_WARN("local_target_pt__2: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
+                        //ROS_WARN("local_target_pt__2: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
                         guider_manager_ -> global_data_.last_progress_time_ = guider_manager_ -> global_data_.global_duration_;
                 }
 
 
-                cout<<"guider_manager_->gp_.maxVel_ :"<<guider_manager_->gp_.maxVel_ <<"   "<<"guider_manager_->gp_.maxAcc_:"<<guider_manager_->gp_.maxAcc_<<endl;
+                //cout<<"guider_manager_->gp_.maxVel_ :"<<guider_manager_->gp_.maxVel_ <<"   "<<"guider_manager_->gp_.maxAcc_:"<<guider_manager_->gp_.maxAcc_<<endl;
                 if((end_pt_ - local_target_pt_).norm() < (guider_manager_->gp_.maxVel_ * guider_manager_ -> gp_.maxVel_) / (2*guider_manager_->gp_.maxAcc_) ){
-                        ROS_WARN("getLocalTarget____1");
+                        //ROS_WARN("getLocalTarget____1");
                         local_target_vel_ = Eigen::Vector3d::Zero();
                 }else {
-                        ROS_WARN("getLocalTarget____2");
+                        //ROS_WARN("getLocalTarget____2");
                         local_target_vel_ = guider_manager_ -> global_data_.getVelocity(t);
 
-                        ROS_WARN("local_target_vel_: %f, %f, %f", local_target_vel_(0),local_target_vel_(1),local_target_vel_(2));
+                        //ROS_WARN("local_target_vel_: %f, %f, %f", local_target_vel_(0),local_target_vel_(1),local_target_vel_(2));
                                         
                 }
 
@@ -379,7 +391,7 @@ namespace oaguider{
         //6
         bool OagFSM::callReboundReguide(){
 
-                ROS_WARN("callReboundReguide()");
+                //ROS_WARN("callReboundReguide()");
 
                 getLocalTarget();
 
@@ -389,12 +401,13 @@ namespace oaguider{
         //Eigen::Vector3d start_vel, Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,Eigen::Vector3d local_target_vel){
 
                 auto info = &guider_manager_->local_data_;
-                ROS_INFO("local duration %f",guider_manager_->local_data_.duration_);
+                //ROS_INFO("local duration %f",guider_manager_->local_data_.duration_);
                 drone_trajs::Bspline bspline;
                 /* 1. publish traj to traj_server */
                 bspline.order = 3;
                 bspline.start_time = info->start_time_;
                 bspline.traj_id = info->traj_id_;
+                //ROS_WARN("info->traj_id_:%d", info->traj_id_);
 
                 Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
                 bspline.pos_pts.reserve(pos_pts.cols());
@@ -421,7 +434,7 @@ namespace oaguider{
 
 
 
-                ROS_WARN("bspline size %d", bspline.pos_pts.size());
+                //ROS_WARN("bspline size %d", bspline.pos_pts.size());
                 bspline_pub_.publish(bspline);
                 /* 2. publish traj for visualization */
                 visualization_->displayMatrixXdTraj(info->position_traj_.get_control_points(), 0);
