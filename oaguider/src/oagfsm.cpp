@@ -56,7 +56,7 @@ namespace oaguider{
 
                 odom_sub_ = nh.subscribe("/odom_world", 1, &OagFSM::odomCbk, this);
 
-                bspline_pub_ = nh.advertise<drone_trajs::Bspline>("guider/bspline", 10);
+                bspline_pub_ = nh.advertise<drone_trajs::Bspline>("/guider/bspline", 10);
                 data_disp_pub_ = nh.advertise<drone_trajs::DataDisp>("guider/data_display", 100);
 
 
@@ -212,7 +212,6 @@ namespace oaguider{
                                 ros::Time time_now = ros::Time::now();
                                 double t_cur = (time_now - info->start_time_).toSec();
 
-
                                 t_cur = min(info->duration_, t_cur);
 
                                 ROS_WARN("EXEC_TRAJ");
@@ -221,7 +220,7 @@ namespace oaguider{
 
                                 ROS_WARN("pos : %f,%f,%f",pos(0),pos(1),pos(2));
 
-                                if( (local_target_pt_ - end_pt_).norm() < 1e-3  ){          // close to the global target        
+                                if( (local_target_pt_ - intercept_pt_).norm() < 1e-3  ){          // close to the global target        
                                         if (t_cur > info->duration_ - 1e-2){
                                                 have_target_ = false;
                                                 have_trigger_ = false;
@@ -390,8 +389,39 @@ namespace oaguider{
         //Eigen::Vector3d start_vel, Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,Eigen::Vector3d local_target_vel){
 
                 auto info = &guider_manager_->local_data_;
+                ROS_INFO("local duration %f",guider_manager_->local_data_.duration_);
                 drone_trajs::Bspline bspline;
                 /* 1. publish traj to traj_server */
+                bspline.order = 3;
+                bspline.start_time = info->start_time_;
+                bspline.traj_id = info->traj_id_;
+
+                Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
+                bspline.pos_pts.reserve(pos_pts.cols());
+                for (int i = 0; i < pos_pts.cols(); ++i)
+                {
+                        geometry_msgs::Point pt;
+                        pt.x = pos_pts(0, i);
+                        pt.y = pos_pts(1, i);
+                        pt.z = pos_pts(2, i);
+                        bspline.pos_pts.push_back(pt);
+                        //cout<<"******* i:"<<i<<" ******"<<endl;
+                }
+
+                Eigen::VectorXd knots = info->position_traj_.getKnot();
+                // cout << knots.transpose() << endl;
+                bspline.knots.reserve(knots.rows());
+                for (int i = 0; i < knots.rows(); ++i)
+                {
+                        bspline.knots.push_back(knots(i));
+                }
+
+                
+
+
+
+
+                ROS_WARN("bspline size %d", bspline.pos_pts.size());
                 bspline_pub_.publish(bspline);
                 /* 2. publish traj for visualization */
                 visualization_->displayMatrixXdTraj(info->position_traj_.get_control_points(), 0);

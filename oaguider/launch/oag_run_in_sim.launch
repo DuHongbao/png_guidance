@@ -24,19 +24,11 @@
         <arg name="guide_horizon" value="7.5" />
         <arg name="drone_id" value="$(arg drone_id)"/>
 
-
-
     </include>
 
-
-
-
-
-
-
         <node pkg="oa_guider" name="drone_traj_server" type="traj_server" output="screen">
-                <remap from="/position_cmd" to="drone_guider/pos_cmd"/>
-                <remap from="/guider/bspline" to="drone_planning/bspline"/>
+                 <!--remap from="/position_cmd" to="/drone_guider/pos_cmd"/> -->
+                <!--remap from="/guider/bspline" to="drone_planning/bspline"/> --> 
                 <param name="traj_server/time_forward" value="1.0" type="double"/>
         </node>
 

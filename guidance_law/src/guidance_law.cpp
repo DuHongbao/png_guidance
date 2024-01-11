@@ -280,7 +280,8 @@ PolynomialTraj GuidanceLaw::guidePNTraj(const Eigen::Vector3d &start_pt, const E
         Eigentraj = newTraj;
 
         for(int i = 0; i< Eigentraj.size();i++){
-                cout<<Eigentraj[i]<<endl;
+                ROS_INFO("Eigentraj[i]:%f, %f, %f", Eigentraj[i][0], Eigentraj[i][1], Eigentraj[i][2]);
+                //cout<<Eigentraj[i]<<endl;
         }
         ////////////////// to polytraj
 
@@ -294,7 +295,8 @@ PolynomialTraj GuidanceLaw::guidePNTraj(const Eigen::Vector3d &start_pt, const E
                 {
                         time(i) = (pos.col(i + 1) - pos.col(i)).norm() / 10.0;
                         trajTime += time(i);
-                        cout<<"Time:"<<time(i)<<endl;
+                        ROS_INFO("Time[i]: %f", time(i));
+                        //cout<<"Time:"<<time(i)<<endl;
                 }  
         //time(0) *= 2.0;
         //time(time.rows() - 1) *= 2.0;

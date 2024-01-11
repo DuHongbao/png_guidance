@@ -15,19 +15,21 @@ double vel_gain[3] = {0, 0, 0};
 //using drone_trajs::UniformBspline;
 
 bool receive_traj_ = false;
-vector<UniformBspline> traj_;
+vector<UniformBspline> traj_(3);
 double traj_duration_;
 ros::Time start_time_;
 int traj_id_;
 
 // yaw control
 double last_yaw_, last_yaw_dot_;
-double time_forward_;
+double time_forward_(1.0);
 
 void bsplineCallback(drone_trajs::BsplineConstPtr msg)
 {
   // parse pos traj
 
+
+  ROS_WARN("msg->pos_pts.size():%d", msg->pos_pts.size());
   Eigen::MatrixXd pos_pts(3, msg->pos_pts.size());
 
   Eigen::VectorXd knots(msg->knots.size());
@@ -54,15 +56,15 @@ void bsplineCallback(drone_trajs::BsplineConstPtr msg)
   // }
 
   //UniformBspline yaw_traj(yaw_pts, msg->order, msg->yaw_dt);
-
+  ROS_WARN("bspline reciving!1");
   start_time_ = msg->start_time;
   traj_id_ = msg->traj_id;
-
+  ROS_WARN("bspline reciving!2");
   traj_.clear();
   traj_.push_back(pos_traj);
   traj_.push_back(traj_[0].getDerivative());
   traj_.push_back(traj_[1].getDerivative());
-
+  ROS_WARN("bspline reciving!3");
   traj_duration_ = traj_[0].getTimeSum();
 
   receive_traj_ = true;
@@ -164,7 +166,11 @@ void cmdCallback(const ros::TimerEvent &e)
 {
   /* no publishing before receive traj_ */
   if (!receive_traj_)
+  {
+     cout << "[Traj server]: NO receive!" << endl;
     return;
+  }
+  cout << "[Traj server]: receive!" << endl;
 
   ros::Time time_now = ros::Time::now();
   double t_cur = (time_now - start_time_).toSec();
@@ -227,6 +233,8 @@ void cmdCallback(const ros::TimerEvent &e)
 
   last_yaw_ = cmd.yaw;
 
+  ROS_INFO("cmd velovity %f, %f, %f",cmd.velocity.x, cmd.velocity.y, cmd.velocity.z);
+
   pos_cmd_pub.publish(cmd);
 }
 
@@ -238,7 +246,7 @@ int main(int argc, char **argv)
 
   ros::Subscriber bspline_sub = nh.subscribe("/guider/bspline", 10, bsplineCallback);
 
-  pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
+  pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/drone_guider/pos_cmd", 50);
 
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(0.01), cmdCallback);
 
@@ -251,7 +259,7 @@ int main(int argc, char **argv)
   cmd.kv[1] = vel_gain[1];
   cmd.kv[2] = vel_gain[2];
 
-  nh.param("traj_server/time_forward", time_forward_, -1.0);
+  nh.param("traj_server/time_forward", time_forward_, 1.0);
   last_yaw_ = 0.0;
   last_yaw_dot_ = 0.0;
 

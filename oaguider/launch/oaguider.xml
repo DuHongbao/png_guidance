@@ -14,6 +14,9 @@
             <param name="guide/maxVel" value="$(arg max_vel)" type="double"/>
             <param name="guide/maxAcc" value="$(arg max_acc)" type="double"/>
             <param name="guide/maxJerk" value="4" type="double"/>
+            <!-- <param name="guider/bspline" value="4" /> -->
+
+            
             <!--<remap from="~odom_world" to="$(odometry_topic)"/>-->
 
 

@@ -73,7 +73,8 @@
                 "*.ipp": "cpp",
                 "hash_map": "cpp",
                 "hash_set": "cpp",
-                "specialfunctions": "cpp"
+                "specialfunctions": "cpp",
+                "valarray": "cpp"
         },
         "C_Cpp.errorSquiggles": "disabled"
 }

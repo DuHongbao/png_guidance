@@ -107,8 +107,6 @@ namespace oaguider{
                                         }
                                 }while(flag_too_far);
 
-
-                                cout<<"______________________"<<endl;
                                 //gl_traj = GuidanceLaw::guidePNTraj(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
                                 //gl_traj = PolynomialTraj::minSnapTraj(pos, start_vel, local_target_vel, start_acc, Eigen::Vector3d::Zero(), local_t);
 
@@ -137,8 +135,7 @@ namespace oaguider{
                                 start_end_derivatives.push_back(local_target_vel);
                                 start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(0));
                                 start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(t));
-                                
-                                cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+
                                 for(int i = 0; i<point_set.size();i++){
                                         ROS_INFO("point_set[i]%f, %f, %f",  point_set[i](0), point_set[i](1), point_set[i](2));
                                 }
@@ -148,6 +145,7 @@ namespace oaguider{
                                 // Initial path generated from previous trajectory.
                                 double t;
                                 double t_cur = (ros::Time::now() - local_data_.start_time_).toSec();
+                                ROS_WARN("t_cur: %f",t_cur);
 
                                 vector<double> pseudo_arc_length;
                                 vector<Eigen::Vector3d> segment_point;
@@ -155,7 +153,7 @@ namespace oaguider{
                                 for (t = t_cur; t < local_data_.duration_ + 1e-3; t += ts)
                                 {
                                         segment_point.push_back(local_data_.position_traj_.evaluateDeBoorT(t));
-                                        //cout<<"t:"<<t<<"  local_data_.duration_"<<local_data_.duration_<<endl;
+                                        
                                         if (t > t_cur){
                                                 pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
                                         }
@@ -163,21 +161,31 @@ namespace oaguider{
                                 cout<<"t:"<<t<<endl;
                                 t -= ts;
                                 double poly_time = (local_data_.position_traj_.evaluateDeBoorT(t) - local_target_pt).norm() / gp_.maxVel_ * 2.0;
-                                if (poly_time > ts)
-                                {
-                                        PolynomialTraj gl_traj = GuidanceLaw::guidePNTraj(local_data_.position_traj_.evaluateDeBoorT(t), local_data_.velocity_traj_.evaluateDeBoorT(t), 
-                                        local_data_.acceleration_traj_.evaluateDeBoorT(t), local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), poly_time);
+                                if (poly_time > ts){
                                         for(t = ts; t < poly_time; t += ts){
-                                                if(!pseudo_arc_length.empty())
-                                                {
-                                                        segment_point.push_back(gl_traj.evaluate(t));
-                                                        pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
-                                                }else{
-                                                        ROS_ERROR("pseudo_arc_length is empty, return!");
-                                                        continous_failures_count_++;
-                                                        return false;
-                                                }
+                                                segment_point.push_back(global_data_.global_traj_.evaluate(t));
+                                                pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
+
                                         }
+
+                                        
+
+
+
+
+                                        // PolynomialTraj gl_traj = GuidanceLaw::guidePNTraj(local_data_.position_traj_.evaluateDeBoorT(t), local_data_.velocity_traj_.evaluateDeBoorT(t), 
+                                        // local_data_.acceleration_traj_.evaluateDeBoorT(t), local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), poly_time);
+                                        // for(t = ts; t < poly_time; t += ts){
+                                        //         if(!pseudo_arc_length.empty())
+                                        //         {
+                                        //                 segment_point.push_back(gl_traj.evaluate(t));
+                                        //                 pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
+                                        //         }else{
+                                        //                 ROS_ERROR("pseudo_arc_length is empty, return!");
+                                        //                 continous_failures_count_++;
+                                        //                 return false;
+                                        //         }
+                                        // }
                                 }
 
                                 double sample_length = 0;
@@ -222,7 +230,7 @@ namespace oaguider{
 
                 Eigen::MatrixXd ctrl_pts, ctrl_pts_temp;
                 UniformBspline::parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
-
+                ROS_WARN("ctrl_pts.size(): %d", ctrl_pts.cols());
                 UniformBspline pos = UniformBspline(ctrl_pts, 3, ts);
                 pos.setPhysicalLimits(gp_.maxVel_, gp_.maxAcc_, gp_.feasibility_tolerance_);
 

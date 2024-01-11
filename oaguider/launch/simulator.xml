@@ -23,7 +23,7 @@
             <param name="init_x" value="$(arg init_x_)"/>
             <param name="init_y" value="$(arg init_y_)"/>
             <param name="init_z" value="$(arg init_z_)"/>
-            <remap from="~command" to="/drone1_cmd"/>
+            <remap from="~command" to="/drone_guider/pos_cmd"/>
             <remap from="~odometry" to="/odom_world"/>
       </node>
 
