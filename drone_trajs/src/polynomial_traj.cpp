@@ -187,10 +187,8 @@ PolynomialTraj PolynomialTraj::minSnapTraj(const Eigen::MatrixXd &Pos, const Eig
 
 
   double end_time = ros::Time::now().toSec();
-  std::cout << "一次查找耗时:" << (end_time - begin_time) << std::endl;
-    std::cout<<"******************************"<<std::endl;
-
-
+  //std::cout << "一次查找耗时:" << (end_time - begin_time) << std::endl;
+   // std::cout<<"******************************"<<std::endl;
 
   return poly_traj;
 }

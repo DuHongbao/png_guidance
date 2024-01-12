@@ -59,7 +59,7 @@ namespace oaguider{
                 odom_sub_ = nh.subscribe("/odom_world", 1, &OagFSM::odomCbk, this);
 
                 bspline_pub_ = nh.advertise<drone_trajs::Bspline>("/guider/bspline", 10);
-                data_disp_pub_ = nh.advertise<drone_trajs::DataDisp>("guider/data_display", 100);
+                data_disp_pub_ = nh.advertise<drone_trajs::DataDisp>("/guider/data_display", 100);
 
 
 
@@ -87,7 +87,7 @@ namespace oaguider{
 
         //0
         void OagFSM::targetCallback(const nav_msgs::OdometryConstPtr &msg){
-                ROS_INFO("targetCallback().");
+                //ROS_INFO("targetCallback().");
                 if (msg->pose.pose.position.z < -0.1)
                         return;
                 cout << "Triggered!"<<endl;
@@ -116,6 +116,7 @@ namespace oaguider{
                 //ROS_INFO("end_vel_: %f, %f, %f", end_vel_(0),end_vel_(1), end_vel_(2));
                 //ROS_WARN("intercept_pt_: %f, %f, %f", intercept_pt_(0),intercept_pt_(1), intercept_pt_(2));
 
+                ROS_WARN("intercept_pt_: %f,%f%f, || %f, %f, %f",intercept_pt_[0], intercept_pt_[1], intercept_pt_[2], old_intercept_pt_[0], old_intercept_pt_[1], old_intercept_pt_[2]);
                 if( (intercept_pt_ - old_intercept_pt_).norm()<1.5 )// if the intercept point not changed;
                 {
                         cout<<"Tunnel1:"<<endl;
@@ -131,9 +132,9 @@ namespace oaguider{
                         success = guider_manager_->guideGlobalTraj(start_pos, start_vel, start_acc, end_pt_, end_vel_, end_acc);
 
                         //ROS_INFO("Guide trajectory %s", success ? "true" : "false");
-                        if(success){
-                                old_intercept_pt_ = intercept_pt_;
-                        }
+                }
+                if(success){
+                        old_intercept_pt_ = intercept_pt_;
                 }
 
                 if(success){
@@ -159,7 +160,6 @@ namespace oaguider{
                                         ros::Duration(0.001).sleep();
                                 }
 
-                                ROS_WARN("TUNNEL3!");
                                 changeFSMExecState(REPLAN_TRAJ, "TRIG");
                         }
                         visualization_->displayDroneTraj(global_traj, 0.5, 0);
@@ -171,7 +171,7 @@ namespace oaguider{
         //2
         void OagFSM::execFsmCbk(const ros::TimerEvent &e){
 
-                printFSMExecState();
+                //printFSMExecState();
                 exec_timer_.stop(); // To avoid blockage
                 switch (exec_state_)
                 {
@@ -225,7 +225,7 @@ namespace oaguider{
 
                                 Eigen::Vector3d pos = info->position_traj_.evaluateDeBoorT(t_cur);
 
-                                ROS_WARN("pos : %f,%f,%f",pos(0),pos(1),pos(2));
+                                //ROS_WARN("pos : %f,%f,%f",pos(0),pos(1),pos(2));
 
                                 if( (local_target_pt_ - intercept_pt_).norm() < 1e-3  ){          // close to the global target        
                                         if (t_cur > info->duration_ - 1e-2){
@@ -382,7 +382,6 @@ namespace oaguider{
                         local_target_vel_ = guider_manager_ -> global_data_.getVelocity(t);
 
                         //ROS_WARN("local_target_vel_: %f, %f, %f", local_target_vel_(0),local_target_vel_(1),local_target_vel_(2));
-                                        
                 }
 
 
@@ -428,10 +427,7 @@ namespace oaguider{
                 {
                         bspline.knots.push_back(knots(i));
                 }
-
-                
-
-
+        
 
 
                 //ROS_WARN("bspline size %d", bspline.pos_pts.size());

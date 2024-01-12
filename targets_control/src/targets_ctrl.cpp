@@ -95,8 +95,10 @@ void bspline_()
 
         for (int i = 0; i < ctrlpts_size - 4; ++i)
         {
-                pos_pts(0, i) = startPoint[0] + 4.0*moveVector[0]*cos(0.031415926*i);
-                pos_pts(1, i) = startPoint[1] + 4.0*moveVector[1]* sin(0.031415926*i);
+                // pos_pts(0, i) = startPoint[0] + 4.0*moveVector[0]*cos(0.031415926*i);
+                // pos_pts(1, i) = startPoint[1] + 4.0*moveVector[1]* sin(0.031415926*i);
+                pos_pts(0, i) = startPoint[0] + moveVector[0]*i;
+                pos_pts(1, i) = startPoint[1] + moveVector[1]*i*0.05;
                 pos_pts(2, i) = startPoint[2] + moveVector[2]*i;
         }
 

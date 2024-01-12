@@ -150,10 +150,10 @@ bool  GuidanceLaw::calcPNGuideTraj(vehicle &D, vehicle &T, vector<Eigen::Vector3
                 TTraj.push_back(T_temp_);
 
                 if(distance<0.5){
-                        ROS_INFO("Target will intercepted after: %f seconds", t);
+                        //ROS_INFO("Target will intercepted after: %f seconds", t);
 
                         IntePt = D.states().pos;
-                        ROS_WARN("D.states().pos: %f, %f, %f", D.states().pos(0),D.states().pos(1),D.states().pos(2));
+                        //ROS_WARN("D.states().pos: %f, %f, %f", D.states().pos(0),D.states().pos(1),D.states().pos(2));
                         break;
                         
                 }
