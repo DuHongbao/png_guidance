@@ -19,7 +19,7 @@ using std::endl;
                                                 Eigen::Vector4d color, int id, bool show_sphere/*true*/)
   {
     visualization_msgs::Marker sphere, line_strip;
-    sphere.header.frame_id = line_strip.header.frame_id = "map";
+    sphere.header.frame_id = line_strip.header.frame_id = "world";
     sphere.header.stamp = line_strip.header.stamp = ros::Time::now();
     sphere.type = visualization_msgs::Marker::SPHERE_LIST;
     line_strip.type = visualization_msgs::Marker::LINE_STRIP;
@@ -159,7 +159,7 @@ using std::endl;
       return;
     }
 
-    Eigen::Vector4d color(1, 0.1, 0.1, 1);
+    Eigen::Vector4d color(1, 1.0, 0.0, 0.0);
     displayMarkerList(global_list_pub, init_pts, scale, color, id);
   }
 

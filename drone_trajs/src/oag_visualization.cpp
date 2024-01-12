@@ -4,9 +4,9 @@
 
 OAGVisualization::OAGVisualization(ros::NodeHandle &nh, int obs_num){
         node=nh;
-        Drone_traj_pub = nh.advertise<visualization_msgs::Marker>("drone_traj", 2);
-        Target_traj_pub = nh.advertise<visualization_msgs::Marker>("target_traj",2);
-        MatrixXd_traj_pub = nh.advertise<visualization_msgs::Marker>("optimal_list", 2);
+        Drone_traj_pub = nh.advertise<visualization_msgs::Marker>("/drone_traj", 2);
+        Target_traj_pub = nh.advertise<visualization_msgs::Marker>("/target_traj",2);
+        MatrixXd_traj_pub = nh.advertise<visualization_msgs::Marker>("/optimal_list", 2);
         for (int i=0;i<obs_num;i++){
                 std::string obsStr = "obstacle_trajs";
                 std::string numstr = std::to_string(i);
@@ -14,16 +14,16 @@ OAGVisualization::OAGVisualization(ros::NodeHandle &nh, int obs_num){
                 Obstacles_traj_pub.push_back(nh.advertise<visualization_msgs::Marker>(obsStr, 2));
         }
         //Obstacle_traj_pubs = nh.advertise<visualization_msgs::Marker>("obstacle_trajs",2);
-        Acc_arrows_pub = nh.advertise<visualization_msgs::MarkerArray>("acc_arrows",2);
-        Vel_arrows_pub = nh.advertise<visualization_msgs::MarkerArray>("vel_arrows",2);
-        IntcPoint_pub = nh.advertise<visualization_msgs::Marker>("intc_point",2);
+        Acc_arrows_pub = nh.advertise<visualization_msgs::MarkerArray>("/acc_arrows",2);
+        Vel_arrows_pub = nh.advertise<visualization_msgs::MarkerArray>("/vel_arrows",2);
+        IntcPoint_pub = nh.advertise<visualization_msgs::Marker>("/intc_point",2);
 }
 
 void OAGVisualization::displayMarkerList(ros::Publisher &pub, const vector<Eigen::Vector3d> &list, double scale,
                            Eigen::Vector4d color, int id,  bool show_sphere/*true*/){
 
         visualization_msgs::Marker sphere, line_strip;
-        sphere.header.frame_id = line_strip.header.frame_id = "map";
+        sphere.header.frame_id = line_strip.header.frame_id = "world";
         sphere.header.stamp = line_strip.header.stamp = ros::Time::now();
         sphere.type = visualization_msgs::Marker::SPHERE_LIST;
         line_strip.type = visualization_msgs::Marker::LINE_STRIP;
@@ -126,7 +126,7 @@ void OAGVisualization::displayVel(vector<Eigen::Vector3d> pos_pts, vector<Eigen:
 void OAGVisualization::displayInterceptPoint(Eigen::Vector3d intc_point, Eigen::Vector4d color, const double scale, int id){
 
         visualization_msgs::Marker sphere;
-        sphere.header.frame_id = "map";
+        sphere.header.frame_id = "world";
         sphere.header.stamp = ros::Time::now();
         sphere.type = visualization_msgs::Marker::SPHERE;
         sphere.action = visualization_msgs::Marker::ADD;
@@ -152,7 +152,7 @@ void OAGVisualization::displayInterceptPoint(Eigen::Vector3d intc_point, Eigen::
                                                         const vector<Eigen::Vector3d> &v_or_a, double scale, Eigen::Vector4d color, int id)
   {
     visualization_msgs::Marker arrow;
-    arrow.header.frame_id = "map";
+    arrow.header.frame_id = "world";
     arrow.header.stamp = ros::Time::now();
     arrow.type = visualization_msgs::Marker::ARROW;
     arrow.action = visualization_msgs::Marker::ADD;

@@ -29,7 +29,7 @@ double time_forward_;
 int  ctrlpts_size = 204;
 
 Eigen::Vector3d startPoint(10.0, 0.0, 1.0);
-Eigen::Vector3d  moveVector(0.1, 5.0, 0.0);
+Eigen::Vector3d  moveVector(0.1, 0.1, 0.0);
 
 void bsplineCallback(drone_trajs::BsplineConstPtr msg)
 {
@@ -98,7 +98,7 @@ void bspline_()
                 // pos_pts(0, i) = startPoint[0] + 4.0*moveVector[0]*cos(0.031415926*i);
                 // pos_pts(1, i) = startPoint[1] + 4.0*moveVector[1]* sin(0.031415926*i);
                 pos_pts(0, i) = startPoint[0] + moveVector[0]*i;
-                pos_pts(1, i) = startPoint[1] + moveVector[1]*i*0.05;
+                pos_pts(1, i) = startPoint[1] + moveVector[1]*i;
                 pos_pts(2, i) = startPoint[2] + moveVector[2]*i;
         }
 

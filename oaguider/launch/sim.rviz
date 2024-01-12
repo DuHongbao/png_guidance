@@ -27,6 +27,7 @@ Panels:
         - /drone31/Mapping1/map inflate1
         - /drone31/Simulation1
         - /drone31/Simulation1/robot1
+        - /Marker1
       Splitter Ratio: 0.43611112236976624
     Tree Height: 660
   - Class: rviz/Selection
@@ -630,10 +631,10 @@ Visualization Manager:
       Value: false
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /oaguider/drone_traj
+      Marker Topic: /drone_traj
       Name: Marker
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -663,25 +664,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 37.7010383605957
+      Distance: 17.256393432617188
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.28789472579956055
-        Y: -0.3084380328655243
+        X: 6.881434440612793
+        Y: 5.297136306762695
         Z: -9.5367431640625e-7
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 0.8997968435287476
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.1415886878967285
+      Yaw: 2.451575517654419
     Saved:
       - Class: rviz/FPS
         Enable Stereo Rendering:

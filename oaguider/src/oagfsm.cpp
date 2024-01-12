@@ -54,7 +54,7 @@ namespace oaguider{
 
                 /*callback*/
                 exec_timer_ = nh.createTimer(ros::Duration(0.01), &OagFSM::execFsmCbk, this);
-                safety_timer_ = nh.createTimer(ros::Duration(0.05), &OagFSM::checkCollisionCbk, this);
+                //safety_timer_ = nh.createTimer(ros::Duration(0.05), &OagFSM::checkCollisionCbk, this);
 
                 odom_sub_ = nh.subscribe("/odom_world", 1, &OagFSM::odomCbk, this);
 
@@ -90,7 +90,6 @@ namespace oaguider{
                 //ROS_INFO("targetCallback().");
                 if (msg->pose.pose.position.z < -0.1)
                         return;
-                cout << "Triggered!"<<endl;
 
                 init_pt_ = odom_pos_;
                 //Eigen::Vector3d object_pt(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
@@ -111,12 +110,14 @@ namespace oaguider{
 
 
                 Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(start_pos, start_vel, end_pt_, end_vel_);
+                ROS_WARN("position: %f,%f, %f, || %f, %f, %f",start_pos[0], start_pos[1], start_pos[2], end_pt_[0], end_pt_[1], end_pt_[2]);
+                ROS_WARN("velocity: %f,%f, %f, || %f, %f, %f",start_vel[0], start_vel[1], start_vel[2], end_vel_[0], end_vel_[1], end_vel_[2]);
 
                 //ROS_INFO("end_pt_: %f, %f, %f", end_pt_[0],end_pt_(1), end_pt_(2));
                 //ROS_INFO("end_vel_: %f, %f, %f", end_vel_(0),end_vel_(1), end_vel_(2));
                 //ROS_WARN("intercept_pt_: %f, %f, %f", intercept_pt_(0),intercept_pt_(1), intercept_pt_(2));
 
-                ROS_WARN("intercept_pt_: %f,%f%f, || %f, %f, %f",intercept_pt_[0], intercept_pt_[1], intercept_pt_[2], old_intercept_pt_[0], old_intercept_pt_[1], old_intercept_pt_[2]);
+                ROS_WARN("intercept_pt_: %f,%f, %f, || %f, %f, %f",intercept_pt_[0], intercept_pt_[1], intercept_pt_[2], old_intercept_pt_[0], old_intercept_pt_[1], old_intercept_pt_[2]);
                 if( (intercept_pt_ - old_intercept_pt_).norm()<1.5 )// if the intercept point not changed;
                 {
                         cout<<"Tunnel1:"<<endl;
@@ -162,7 +163,7 @@ namespace oaguider{
 
                                 changeFSMExecState(REPLAN_TRAJ, "TRIG");
                         }
-                        visualization_->displayDroneTraj(global_traj, 0.5, 0);
+                        visualization_->displayDroneTraj(global_traj, 0.1, 0);
                 }else{
                         ROS_ERROR("Unable to generate global trajectory!");
                 }
