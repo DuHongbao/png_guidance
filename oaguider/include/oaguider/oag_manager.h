@@ -33,6 +33,8 @@ class OAGManager{
                 void getInterceptPt(Eigen::Vector3d &InterceptPoint);
 
                  void updateTrajInfo(const UniformBspline &position_traj, const ros::Time time_now);
+
+                  bool refineTrajAlgo(UniformBspline &traj, vector<Eigen::Vector3d> &start_end_derivative, double ratio, double &ts, Eigen::MatrixXd &optimal_control_points);
         public:
                 GuideParammeters gp_;
                 LocalTrajData local_data_;

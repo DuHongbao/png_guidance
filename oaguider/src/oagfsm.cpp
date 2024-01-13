@@ -382,7 +382,7 @@ namespace oaguider{
                         //ROS_WARN("getLocalTarget____2");
                         local_target_vel_ = guider_manager_ -> global_data_.getVelocity(t);
 
-                        //ROS_WARN("local_target_vel_: %f, %f, %f", local_target_vel_(0),local_target_vel_(1),local_target_vel_(2));
+                        ROS_WARN("local_target_vel_: %f, %f, %f", local_target_vel_(0),local_target_vel_(1),local_target_vel_(2));
                 }
 
 

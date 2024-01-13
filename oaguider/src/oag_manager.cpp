@@ -234,6 +234,22 @@ namespace oaguider{
                 UniformBspline pos = UniformBspline(ctrl_pts, 3, ts);
                 pos.setPhysicalLimits(gp_.maxVel_, gp_.maxAcc_, gp_.feasibility_tolerance_);
 
+
+
+
+                double ratio;
+                bool flag_step_2_success = true;
+                if(!pos.checkFeasibility(ratio, false))
+                        cout<<"Feasibility: False"<<endl;
+                else
+                        cout << "Feasibility: True." << endl;
+
+ 
+
+
+
+
+
                 updateTrajInfo(pos, ros::Time::now());    //更新局部轨迹 
 
                 //time spend
@@ -311,7 +327,26 @@ namespace oaguider{
                 local_data_.traj_id_ += 1;
         }
 
+        // bool OAGManager::refineTrajAlgo(UniformBspline &traj, vector<Eigen::Vector3d> &start_end_derivative, double ratio, double &ts, Eigen::MatrixXd &optimal_control_points)
+        // {
+        // double t_inc;
 
+        // Eigen::MatrixXd ctrl_pts; // = traj.getControlPoint()
+
+        // // std::cout << "ratio: " << ratio << std::endl;
+        // reparamBspline(traj, start_end_derivative, ratio, ctrl_pts, ts, t_inc);
+
+        // traj = UniformBspline(ctrl_pts, 3, ts);
+
+        // double t_step = traj.getTimeSum() / (ctrl_pts.cols() - 3);
+        // bspline_optimizer_->ref_pts_.clear();
+        // for (double t = 0; t < traj.getTimeSum() + 1e-4; t += t_step)
+        // bspline_optimizer_->ref_pts_.push_back(traj.evaluateDeBoorT(t));
+
+        // bool success = bspline_optimizer_->BsplineOptimizeTrajRefine(ctrl_pts, ts, optimal_control_points);
+
+        // return success;
+        // }
 
 
 }
