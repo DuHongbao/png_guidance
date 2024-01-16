@@ -118,6 +118,10 @@ namespace oaguider{
                 //ROS_WARN("intercept_pt_: %f, %f, %f", intercept_pt_(0),intercept_pt_(1), intercept_pt_(2));
 
                 ROS_WARN("intercept_pt_: %f,%f, %f, || %f, %f, %f",intercept_pt_[0], intercept_pt_[1], intercept_pt_[2], old_intercept_pt_[0], old_intercept_pt_[1], old_intercept_pt_[2]);
+                if((start_pos - intercept_pt_).norm()<1.0){
+                        changeFSMExecState(WAIT_TARGET, "TRIG");
+                }
+                
                 if( (intercept_pt_ - old_intercept_pt_).norm()<1.5 )// if the intercept point not changed;
                 {
                         cout<<"Tunnel1:"<<endl;
@@ -134,6 +138,7 @@ namespace oaguider{
 
                         //ROS_INFO("Guide trajectory %s", success ? "true" : "false");
                 }
+                
                 if(success){
                         old_intercept_pt_ = intercept_pt_;
                 }
@@ -165,7 +170,8 @@ namespace oaguider{
                         }
                         visualization_->displayDroneTraj(global_traj, 0.1, 0);
                 }else{
-                        ROS_ERROR("Unable to generate global trajectory!");
+                        changeFSMExecState(WAIT_TARGET, "TRIG");
+                        //ROS_ERROR("Unable to generate global trajectory!");
                 }
         }
 
@@ -343,8 +349,7 @@ namespace oaguider{
                  //cout<<"guider_manager_->gp_.maxVel_ :"<<guider_manager_->gp_.maxVel_ <<endl;
 
                 double dist_min = 9999, dist_min_t = 0.0;
-                //cout<<"guider_manager_->global_data_.last_progress_time_"<< guider_manager_->global_data_.last_progress_time_ <<endl;
-                //cout<<"guider_manager_->global_data_.global_duration_"<<guider_manager_->global_data_.global_duration_<<endl;
+
                 for(t = guider_manager_->global_data_.last_progress_time_; t < guider_manager_->global_data_.global_duration_; t += t_step){
                         Eigen::Vector3d pos_t = guider_manager_->global_data_.getPosition(t);
                         //cout<<"start_pt_:"<<start_pt_<<"    pos_t:"<<pos_t<<endl;
@@ -354,13 +359,12 @@ namespace oaguider{
                                 dist_min = dist;
                                 dist_min_t = t;
                         }
-                        //cout<<"dist:"<<dist<<endl;
-                        //cout<<"guide_horizon_:"<<guide_horizon_<<endl;
+
                         if(dist >= guide_horizon_){
                                 local_target_pt_ = pos_t;
                                 guider_manager_->local_esti_duration_ = t;
                                 guider_manager_  -> global_data_.last_progress_time_ = dist_min_t;
-                                //ROS_WARN("local_target_pt__1: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
+
                                 break;
                         }
                 }
@@ -369,7 +373,7 @@ namespace oaguider{
                 if(t > guider_manager_->global_data_.global_duration_){
                         local_target_pt_ = end_pt_;
                         guider_manager_->local_esti_duration_ = t;
-                        //ROS_WARN("local_target_pt__2: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
+
                         guider_manager_ -> global_data_.last_progress_time_ = guider_manager_ -> global_data_.global_duration_;
                 }
 

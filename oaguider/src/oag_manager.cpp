@@ -35,187 +35,136 @@ namespace oaguider{
         //2
         bool OAGManager::reboundReguide(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
                                         Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,Eigen::Vector3d local_target_vel){
-
-                //ROS_WARN("reboundReguide()");
-                
                 static int count = 0;
-                printf("\033[47;30m\n[drone replan %d]==============================================\033[0m\n",count++);
+                printf("\033[47;30m\n[drone reguide %d]======================================\033[0m\n", count++);
                 if((start_pt - local_target_pt).norm() < 0.2){
                         cout << "Close to goal" << endl;
-                        continous_failures_count_++;
+                        continous_failures_count_++;     // find other continous_failures_count_ using
                         return false;
                 }
-                //ROS_WARN("reboundReguide()__");
+
                 ros::Time t_start = ros::Time::now();
                 ros::Duration t_init, t_guide, t_refine;
 
-                double ts = (start_pt - local_target_pt).norm() > 0.1 ? gp_.ctrl_pt_dist / gp_.maxVel_ * 1.5 : gp_.ctrl_pt_dist / gp_.maxVel_ * 5; 
-                vector<Eigen::Vector3d> drone;
-                vector<Eigen::Vector3d> target;
-                vector<Eigen::Vector3d> obstacles;
-                //ROS_WARN("ts:%f",ts);
-                //guide_law_->setDroneANDEnvStates(drone, target, obstacles);
-                //guide_law_->plan();
-
-                vector<Eigen::Vector3d> point_set, start_end_derivatives;
+                /***STEP 1: INIT***/
+                double ts = (start_pt - local_target_pt).norm() > 0.1 ? gp_.ctrl_pt_dist / gp_.maxVel_ * 1.5 : gp_.ctrl_pt_dist / gp_.maxVel_ * 5;
+                vector<Eigen::Vector3d> point_set;
+                vector<Eigen::Vector3d> start_end_derivatives;
                 static bool flag_first_call = true, flag_force_polynomial = false;
                 bool flag_regenerate = false;
 
-                do 
-                {
+                do{
                         point_set.clear();
                         start_end_derivatives.clear();
                         flag_regenerate = false;
 
-                        // Intial path  generated from a min-snap traj by older.
-                        if(flag_first_call || flag_force_polynomial){
+                        if (flag_first_call || flag_force_polynomial){       // Intial path  generated from a min-snap traj by older.
                                 flag_first_call = false;
                                 flag_force_polynomial = false;
 
-                                PolynomialTraj   gl_traj;
+                                PolynomialTraj gl_traj;
+
                                 double dist = (start_pt - local_target_pt).norm();
-                                double time = pow(gp_.maxVel_, 2) / gp_.maxAcc_ > dist ? 
-                                sqrt(dist / gp_.maxAcc_)
-                                 : (dist - pow(gp_.maxVel_, 2) / gp_.maxAcc_) / gp_.maxVel_ + 2 * gp_.maxVel_ / gp_.maxAcc_;
-                                
-                                
-                                Eigen::MatrixXd pos(3, 3);
-                                Eigen::VectorXd local_t;
+                                double time = pow(gp_.maxVel_, 2) / gp_.maxAcc_ > dist ? sqrt(dist / gp_.maxAcc_) : (dist - pow(gp_.maxVel_, 2) / gp_.maxAcc_) / gp_.maxVel_ + 2 * gp_.maxVel_ / gp_.maxAcc_;
 
-
-                                //ROS_WARN("local_esti_duration_ %f: ", local_esti_duration_);
-                                //ROS_WARN("global_duration_ %f: ", global_data_.global_duration_);
+                                //gl_traj = PolynomialTraj::minSnapTraj(Pos, start_vel, local_target_vel, start_acc, Eigen::Vector3d::Zero(), Time);
+                                gl_traj = PolynomialTraj::one_segment_traj_gen(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
 
                                 double t;
                                 bool flag_too_far;
-                                ts *= 1.5;
-                                do{
-
+                                ts *= 1.5; // ts will be divided by 1.5 in the next
+                                do
+                                {
                                         ts /= 1.5;
                                         point_set.clear();
-                                        flag_too_far = false;  
-                                        Eigen::Vector3d  last_pt = global_data_.global_traj_.evaluate(0);                                      
-                                        for(t = 0; t < local_esti_duration_; t+=ts){
-                                                Eigen::Vector3d pt = global_data_.global_traj_.evaluate(t);
-                                                double points_dist = (last_pt - pt).norm();
-                                                if(points_dist > gp_.ctrl_pt_dist * 1.5){
+                                        flag_too_far = false;
+                                        Eigen::Vector3d last_pt = gl_traj.evaluate(0);
+                                        for (t = 0; t < time; t += ts)
+                                        {
+                                                Eigen::Vector3d pt = gl_traj.evaluate(t);
+                                                if ((last_pt - pt).norm() > gp_.ctrl_pt_dist * 1.5)
+                                                {
                                                         flag_too_far = true;
                                                         break;
                                                 }
                                                 last_pt = pt;
                                                 point_set.push_back(pt);
-
                                         }
-                                }while(flag_too_far);
-
-                                //gl_traj = GuidanceLaw::guidePNTraj(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
-                                //gl_traj = PolynomialTraj::minSnapTraj(pos, start_vel, local_target_vel, start_acc, Eigen::Vector3d::Zero(), local_t);
-
-                                
-                                
-                                // ts *= 1.5;
-                                // do{
-                                //         ts /= 1.5;
-                                //         point_set.clear();
-                                //         flag_too_far = false;
-                                //         Eigen::Vector3d  last_pt = gl_traj.evaluate(0);
-                                //         for(t = 0; t < time; t+=ts){
-                                //                 Eigen::Vector3d pt = gl_traj.evaluate(t);
-                                //                 double points_dist = (last_pt - pt).norm();
-                                //                 if(points_dist > gp_.ctrl_pt_dist * 1.5){
-                                //                         flag_too_far = true;
-                                //                         break;
-                                //                 }
-                                //                 last_pt = pt;
-                                //                 point_set.push_back(pt);
-                                //         }
-                                // }while(flag_too_far);
-
+                                } while (flag_too_far || point_set.size() < 7); // To make sure the initial path has enough points.
                                 t -= ts;
-                                start_end_derivatives.push_back(global_data_.global_traj_.evaluateVel(0));
+                                start_end_derivatives.push_back(gl_traj.evaluateVel(0));
                                 start_end_derivatives.push_back(local_target_vel);
-                                start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(0));
-                                start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(t));
-
-                                // for(int i = 0; i<point_set.size();i++){
-                                //         ROS_INFO("point_set[i]%f, %f, %f",  point_set[i](0), point_set[i](1), point_set[i](2));
-                                // }
-
-                        
+                                start_end_derivatives.push_back(gl_traj.evaluateAcc(0));
+                                start_end_derivatives.push_back(gl_traj.evaluateAcc(t));
                         }else{
-                                // Initial path generated from previous trajectory.
                                 double t;
                                 double t_cur = (ros::Time::now() - local_data_.start_time_).toSec();
-                                ROS_WARN("t_cur: %f",t_cur);
 
                                 vector<double> pseudo_arc_length;
                                 vector<Eigen::Vector3d> segment_point;
                                 pseudo_arc_length.push_back(0.0);
+
                                 for (t = t_cur; t < local_data_.duration_ + 1e-3; t += ts)
                                 {
                                         segment_point.push_back(local_data_.position_traj_.evaluateDeBoorT(t));
-                                        
                                         if (t > t_cur){
                                                 pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
                                         }
                                 }
                                 t -= ts;
-                                double poly_time = (local_data_.position_traj_.evaluateDeBoorT(t) - local_target_pt).norm() / gp_.maxVel_ * 2.0;
-                                if (poly_time > ts){
-                                        for(t = ts; t < poly_time; t += ts){
-                                                segment_point.push_back(global_data_.global_traj_.evaluate(t));
+                                double poly_time = (local_data_.position_traj_.evaluateDeBoorT(t) - local_target_pt).norm() / gp_.maxVel_ * 2;
+
+
+                                if (poly_time > ts)
+                                {
+                                        PolynomialTraj gl_traj = PolynomialTraj::one_segment_traj_gen(local_data_.position_traj_.evaluateDeBoorT(t),
+                                                                                                        local_data_.velocity_traj_.evaluateDeBoorT(t),
+                                                                                                        local_data_.acceleration_traj_.evaluateDeBoorT(t),
+                                                                                                        local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), poly_time);
+                                        cout<<"222Length:"<<gl_traj.getTimeSum() <<endl;
+                                        cout<<"222Vel:"<<gl_traj.getMeanVel()<<endl;
+                                        for (t = ts; t < poly_time; t += ts)
+                                        {
+                                                if (!pseudo_arc_length.empty())
+                                                {
+                                                segment_point.push_back(gl_traj.evaluate(t));
                                                 pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
-
+                                                }
+                                                else
+                                                {
+                                                        ROS_ERROR("pseudo_arc_length is empty, return!");
+                                                        continous_failures_count_++;
+                                                        return false;
+                                                }
                                         }
-
-                                        
-
-
-
-
-                                        // PolynomialTraj gl_traj = GuidanceLaw::guidePNTraj(local_data_.position_traj_.evaluateDeBoorT(t), local_data_.velocity_traj_.evaluateDeBoorT(t), 
-                                        // local_data_.acceleration_traj_.evaluateDeBoorT(t), local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), poly_time);
-                                        // for(t = ts; t < poly_time; t += ts){
-                                        //         if(!pseudo_arc_length.empty())
-                                        //         {
-                                        //                 segment_point.push_back(gl_traj.evaluate(t));
-                                        //                 pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
-                                        //         }else{
-                                        //                 ROS_ERROR("pseudo_arc_length is empty, return!");
-                                        //                 continous_failures_count_++;
-                                        //                 return false;
-                                        //         }
-                                        // }
                                 }
+
 
                                 double sample_length = 0;
                                 double cps_dist = gp_.ctrl_pt_dist * 1.5; // cps_dist will be divided by 1.5 in the next
                                 size_t id = 0;
-                                do
-                                {
+                                do{
                                         cps_dist /= 1.5;
                                         point_set.clear();
                                         sample_length = 0;
                                         id = 0;
                                         while ((id <= pseudo_arc_length.size() - 2) && sample_length <= pseudo_arc_length.back())
                                         {
-                                                if (sample_length >= pseudo_arc_length[id] && sample_length < pseudo_arc_length[id + 1])
-                                                {
-                                                        point_set.push_back((sample_length - pseudo_arc_length[id]) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id + 1] +
-                                                                                (pseudo_arc_length[id + 1] - sample_length) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id]);
-                                                        sample_length += cps_dist;
-                                                }
-                                                else
-                                                        id++;
+                                        if (sample_length >= pseudo_arc_length[id] && sample_length < pseudo_arc_length[id + 1])
+                                        {
+                                        point_set.push_back((sample_length - pseudo_arc_length[id]) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id + 1] +
+                                                                (pseudo_arc_length[id + 1] - sample_length) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id]);
+                                        sample_length += cps_dist;
                                         }
-                                //point_set.push_back(local_target_pt);
-
-                                } while (point_set.size() < 7); // If the start point is very close to end point, this will help
-
+                                        else
+                                        id++;
+                                        }
+                                        point_set.push_back(local_target_pt);
+                                }while(point_set.size() < 7);
 
                                 start_end_derivatives.push_back(local_data_.velocity_traj_.evaluateDeBoorT(t_cur));
-                                start_end_derivatives.push_back(local_target_vel);              //
-                                start_end_derivatives.push_back(local_data_.acceleration_traj_.evaluateDeBoorT(t_cur)); 
+                                start_end_derivatives.push_back(local_target_vel);
+                                start_end_derivatives.push_back(local_data_.acceleration_traj_.evaluateDeBoorT(t_cur));
                                 start_end_derivatives.push_back(Eigen::Vector3d::Zero());
 
                                 if (point_set.size() > gp_.guide_horizen_ / gp_.ctrl_pt_dist * 3) // The initial path is unnormally too long!
@@ -225,17 +174,13 @@ namespace oaguider{
                                 }
 
                         }
-                }while(flag_regenerate);
 
+                }while(flag_regenerate);
 
                 Eigen::MatrixXd ctrl_pts, ctrl_pts_temp;
                 UniformBspline::parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
-                //ROS_WARN("ctrl_pts.size(): %d", ctrl_pts.cols());
                 UniformBspline pos = UniformBspline(ctrl_pts, 3, ts);
                 pos.setPhysicalLimits(gp_.maxVel_, gp_.maxAcc_, gp_.feasibility_tolerance_);
-
-
-
 
                 double ratio;
                 bool flag_step_2_success = true;
@@ -244,24 +189,234 @@ namespace oaguider{
                 else
                         cout << "Feasibility: True." << endl;
 
- 
-
-
-
-
-
                 updateTrajInfo(pos, ros::Time::now());    //更新局部轨迹 
 
-                //time spend
                 static double sum_time = 0;
                 static int count_success = 0;
                 sum_time += (t_init + t_guide + t_refine).toSec();
                 count_success++;
-                //cout << "total time:\033[42m" << (t_init + t_guide + t_refine).toSec() << "\033[0m,optimize:" << (t_init + t_guide).toSec() << ",refine:" << t_refine.toSec() << ",avg_time=" << sum_time / count_success << endl;
-
+                
                 continous_failures_count_ = 0;
+
                 return true;
         }
+
+
+
+
+        //2*
+        // bool OAGManager::reboundReguide(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
+        //                                 Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,Eigen::Vector3d local_target_vel){
+
+        //         static int count = 0;
+        //         printf("\033[47;30m\n[drone replan %d]======================================\033[0m\n",count++);
+
+        //         if((start_pt - local_target_pt).norm() < 0.2){
+        //                 cout << "Close to goal" << endl;
+        //                 continous_failures_count_++;
+        //                 return false;
+        //         }
+
+        //         ros::Time t_start = ros::Time::now();
+        //         ros::Duration t_init, t_guide, t_refine;
+
+        //         /***STEP 1: INIT***/
+        //         double ts = (start_pt - local_target_pt).norm() > 0.1 ? gp_.ctrl_pt_dist / gp_.maxVel_ * 1.5 : gp_.ctrl_pt_dist / gp_.maxVel_ * 5; 
+        //         vector<Eigen::Vector3d> drone;
+        //         vector<Eigen::Vector3d> target;
+        //         vector<Eigen::Vector3d> obstacles;
+        //         //ROS_WARN("ts:%f",ts);
+        //         //guide_law_->setDroneANDEnvStates(drone, target, obstacles);
+        //         //guide_law_->plan();
+
+        //         vector<Eigen::Vector3d> point_set, start_end_derivatives;
+        //         static bool flag_first_call = true, flag_force_polynomial = false;
+        //         bool flag_regenerate = false;
+
+        //         do 
+        //         {
+        //                 point_set.clear();
+        //                 start_end_derivatives.clear();
+        //                 flag_regenerate = false;
+
+        //                 // Intial path  generated from a min-snap traj by older.
+        //                 if(flag_first_call || flag_force_polynomial){
+        //                         flag_first_call = false;
+        //                         flag_force_polynomial = false;
+
+        //                         PolynomialTraj   gl_traj;
+
+        //                         double dist = (start_pt - local_target_pt).norm();
+        //                         double time = pow(gp_.maxVel_, 2) / gp_.maxAcc_ > dist ? sqrt(dist / gp_.maxAcc_) : (dist - pow(gp_.maxVel_, 2) / gp_.maxAcc_) / gp_.maxVel_ + 2 * gp_.maxVel_ / gp_.maxAcc_;
+
+        //                         gl_traj = PolynomialTraj::one_segment_traj_gen(start_pt, start_vel, start_acc, local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), time);
+
+
+        //                         double t;
+        //                         bool flag_too_far;
+        //                         ts *= 1.5;
+        //                         do{
+
+        //                                 ts /= 1.5;
+        //                                 point_set.clear();
+        //                                 flag_too_far = false;  
+        //                                 Eigen::Vector3d  last_pt = global_data_.global_traj_.evaluate(0);            //*************the last_pt should not global_traj_  start time   0      
+        //                                 for(t = 0; t < local_esti_duration_; t+=ts){
+        //                                         Eigen::Vector3d pt = global_data_.global_traj_.evaluate(t);
+        //                                         double points_dist = (last_pt - pt).norm();
+        //                                         if(points_dist > gp_.ctrl_pt_dist * 1.5){
+        //                                                 flag_too_far = true;
+        //                                                 break;
+        //                                         }
+        //                                         last_pt = pt;
+        //                                         point_set.push_back(pt);
+
+        //                                 }
+        //                         }while(flag_too_far);
+        //                         t -= ts;
+        //                         start_end_derivatives.push_back(global_data_.global_traj_.evaluateVel(0));
+        //                         start_end_derivatives.push_back(local_target_vel);
+        //                         start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(0));
+        //                         start_end_derivatives.push_back(global_data_.global_traj_.evaluateAcc(t));
+
+        // // do
+        // // {
+        // //   ts /= 1.5;
+        // //   point_set.clear();
+        // //   flag_too_far = false;
+        // //   Eigen::Vector3d last_pt = gl_traj.evaluate(0);
+        // //   for (t = 0; t < time; t += ts)
+        // //   {
+        // //     Eigen::Vector3d pt = gl_traj.evaluate(t);
+        // //     if ((last_pt - pt).norm() > gp_.ctrl_pt_dist * 1.5)
+        // //     {
+        // //       flag_too_far = true;
+        // //       break;
+        // //     }
+        // //     last_pt = pt;
+        // //     point_set.push_back(pt);
+        // //   }
+        // // } while (flag_too_far);
+        // // t -= ts;
+
+        // // start_end_derivatives.push_back(gl_traj.evaluateVel(0));
+        // // start_end_derivatives.push_back(local_target_vel);
+        // // start_end_derivatives.push_back(gl_traj.evaluateAcc(0));
+        // // start_end_derivatives.push_back(gl_traj.evaluateAcc(t));
+
+                        
+        //                 }else{
+        //                         // Initial path generated from previous trajectory.
+        //                         double t;
+        //                         double t_cur = (ros::Time::now() - local_data_.start_time_).toSec();
+        //                         ROS_WARN("t_cur: %f",t_cur);
+
+        //                         vector<double> pseudo_arc_length;
+        //                         vector<Eigen::Vector3d> segment_point;
+        //                         pseudo_arc_length.push_back(0.0);
+        //                         for (t = t_cur; t < local_data_.duration_ + 1e-3; t += ts)
+        //                         {
+        //                                 segment_point.push_back(local_data_.position_traj_.evaluateDeBoorT(t));
+                                        
+        //                                 if (t > t_cur){
+        //                                         pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
+        //                                 }
+        //                         }
+        //                         t -= ts;
+
+        //                         double poly_time = (local_data_.position_traj_.evaluateDeBoorT(t) - local_target_pt).norm() / gp_.maxVel_ * 2.0;
+  
+        //                         if (poly_time > ts){
+
+        //                                 PolynomialTraj gl_traj = PolynomialTraj::one_segment_traj_gen(local_data_.position_traj_.evaluateDeBoorT(t),
+        //                                                 local_data_.velocity_traj_.evaluateDeBoorT(t),
+        //                                                 local_data_.acceleration_traj_.evaluateDeBoorT(t),
+        //                                                 local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), poly_time);
+
+        //                                 for(t = ts; t < poly_time; t += ts){
+        //                                         if (!pseudo_arc_length.empty())
+        //                                         {
+        //                                                 // segment_point.push_back(global_data_.global_traj_.evaluate(t));
+        //                                                 segment_point.push_back(gl_traj.evaluate(t));
+        //                                                 pseudo_arc_length.push_back((segment_point.back() - segment_point[segment_point.size() - 2]).norm() + pseudo_arc_length.back());
+        //                                         }
+        //                                         else
+        //                                         {
+        //                                         ROS_ERROR("pseudo_arc_length is empty, return!");
+        //                                         continous_failures_count_++;
+        //                                         return false;
+        //                                         }
+                                                
+        //                                 }
+
+        //                                 ROS_ERROR("Die At Here2");
+        //                         }
+
+        //                         double sample_length = 0;
+        //                         double cps_dist = gp_.ctrl_pt_dist * 1.5; // cps_dist will be divided by 1.5 in the next
+        //                         size_t id = 0;
+        //                         do
+        //                         {
+        //                                 cps_dist /= 1.5;
+        //                                 point_set.clear();
+        //                                 sample_length = 0;
+        //                                 id = 0;
+        //                                 while ((id <= pseudo_arc_length.size() - 2) && sample_length <= pseudo_arc_length.back())
+        //                                 {
+        //                                         if (sample_length >= pseudo_arc_length[id] && sample_length < pseudo_arc_length[id + 1])
+        //                                         {
+        //                                                 point_set.push_back((sample_length - pseudo_arc_length[id]) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id + 1] +
+        //                                                                         (pseudo_arc_length[id + 1] - sample_length) / (pseudo_arc_length[id + 1] - pseudo_arc_length[id]) * segment_point[id]);
+        //                                                 sample_length += cps_dist;
+        //                                         }
+        //                                         else
+        //                                                 id++;
+        //                                 }
+        //                                 point_set.push_back(local_target_pt);
+
+        //                         } while (point_set.size() < 7); // If the start point is very close to end point, this will help
+
+
+        //                         start_end_derivatives.push_back(local_data_.velocity_traj_.evaluateDeBoorT(t_cur));
+        //                         start_end_derivatives.push_back(local_target_vel);              //
+        //                         start_end_derivatives.push_back(local_data_.acceleration_traj_.evaluateDeBoorT(t_cur)); 
+        //                         start_end_derivatives.push_back(Eigen::Vector3d::Zero());
+
+        //                         if (point_set.size() > gp_.guide_horizen_ / gp_.ctrl_pt_dist * 3) // The initial path is unnormally too long!
+        //                         {
+        //                                 flag_force_polynomial = true;
+        //                                 flag_regenerate = true;
+        //                         }
+
+        //                 }
+        //         }while(flag_regenerate);
+
+
+        //         Eigen::MatrixXd ctrl_pts, ctrl_pts_temp;
+        //         UniformBspline::parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
+        //         //ROS_WARN("ctrl_pts.size(): %d", ctrl_pts.cols());
+        //         UniformBspline pos = UniformBspline(ctrl_pts, 3, ts);
+        //         pos.setPhysicalLimits(gp_.maxVel_, gp_.maxAcc_, gp_.feasibility_tolerance_);
+
+        //         double ratio;
+        //         bool flag_step_2_success = true;
+        //         if(!pos.checkFeasibility(ratio, false))
+        //                 cout<<"Feasibility: False"<<endl;
+        //         else
+        //                 cout << "Feasibility: True." << endl;
+
+        //         updateTrajInfo(pos, ros::Time::now());    //更新局部轨迹 
+
+        //         //time spend
+        //         static double sum_time = 0;
+        //         static int count_success = 0;
+        //         sum_time += (t_init + t_guide + t_refine).toSec();
+        //         count_success++;
+        //         //cout << "total time:\033[42m" << (t_init + t_guide + t_refine).toSec() << "\033[0m,optimize:" << (t_init + t_guide).toSec() << ",refine:" << t_refine.toSec() << ",avg_time=" << sum_time / count_success << endl;
+
+        //         continous_failures_count_ = 0;
+        //         return true;
+        // }
 
         //3
         bool OAGManager::guideGlobalTraj(const Eigen::Vector3d &start_pos, const Eigen::Vector3d &start_vel, const Eigen::Vector3d &start_acc,
