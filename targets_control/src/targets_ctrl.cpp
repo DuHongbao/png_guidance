@@ -6,9 +6,12 @@
 #include "visualization_msgs/Marker.h"
 #include <ros/ros.h>
 #include <Eigen/Core>
+#include <std_msgs/Bool.h>
 using namespace std;
 
 ros::Publisher pos_cmd_pub;
+bool have_destroied = false;
+
 
 quadrotor_msgs::PositionCommand cmd;
 double pos_gain[3] = {0, 0, 0};
@@ -29,7 +32,7 @@ double time_forward_;
 int  ctrlpts_size = 204;
 
 Eigen::Vector3d startPoint(10.0, 0.0, 1.0);
-Eigen::Vector3d  moveVector(0.1, 0.1, 0.0);
+Eigen::Vector3d  moveVector( 0.0, -0.1, 0.0);
 
 void bsplineCallback(drone_trajs::BsplineConstPtr msg)
 {
@@ -77,6 +80,17 @@ void bsplineCallback(drone_trajs::BsplineConstPtr msg)
 
   receive_traj_ = true;
 }
+
+
+void destroyCallback(const std_msgs::Bool::ConstPtr& msg){
+    if (msg->data) { 
+        ROS_INFO("Destroied: true");
+        have_destroied = msg->data;  
+    } else { 
+        ROS_INFO("Destroied: false");  
+    }  
+}
+
 
 void bspline_()
 {
@@ -343,6 +357,19 @@ void cmdCallback(const ros::TimerEvent &e)
         cmd.yaw_dot = yaw_yawdot.second;
 
         last_yaw_ = cmd.yaw;
+        if(have_destroied){
+          // cmd.position.x = 0;
+          // cmd.position.y = 0;
+          // cmd.position.z = 0;
+
+          cmd.velocity.x = 0;
+          cmd.velocity.y = 0;
+          cmd.velocity.z = 0;
+
+          cmd.acceleration.x = 0;
+          cmd.acceleration.y = 0;
+          cmd.acceleration.z = 0;
+        }
 
         pos_cmd_pub.publish(cmd);
 }
@@ -354,6 +381,7 @@ int main(int argc, char **argv)
         ros::NodeHandle nh("~");
         double loop_rate_hz = 1.0 / 59.1; // 将周期转换为频率，即每秒循环的次数  
         ros::Rate loop_rate(loop_rate_hz);
+        have_destroied = false;
 
 
         bspline_();
@@ -368,6 +396,10 @@ int main(int argc, char **argv)
         pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/target2_cmd", 50);
 
         ros::Timer cmd_timer = nh.createTimer(ros::Duration(0.01), cmdCallback);
+        
+        ros::Subscriber destroysub = nh.subscribe("/destroy_state_", 10, destroyCallback); // 订阅主题并设置回调函数  
+
+  
 
         /* control parameter */
         cmd.kx[0] = pos_gain[0];

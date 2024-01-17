@@ -10,6 +10,8 @@
 #include <drone_trajs/Bspline.h>
 #include "drone_trajs/oag_visualization.h"
 
+#include <std_msgs/Bool.h>
+
 
 namespace oaguider
 {
@@ -20,7 +22,7 @@ namespace oaguider
                                 INIT,
                                 WAIT_TARGET,
                                 GEN_NEW_TRAJ,
-                                REPLAN_TRAJ,
+                                REGUIDE,
                                 EXEC_TRAJ,
                                 EMERGENCY_STOP,
                         };
@@ -65,7 +67,9 @@ namespace oaguider
                         ros::NodeHandle node_;
                         ros::Timer exec_timer_, safety_timer_,target_timer_;
                         ros::Subscriber intercept_point_sub_, odom_sub_, waypoint_sub_, trigger_sub_; 
-                        ros::Publisher replan_pub_, new_pub_, bspline_pub_, data_disp_pub_;
+                        ros::Publisher replan_pub_, new_pub_, bspline_pub_, data_disp_pub_, destroyed_pub_;
+
+                        std_msgs::Bool destroy_state;
 
                         void execFsmCbk(const ros::TimerEvent &e);
                         void checkCollisionCbk(const ros::TimerEvent &e);

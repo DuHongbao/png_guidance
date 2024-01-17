@@ -38,6 +38,8 @@ namespace oaguider{
                 nh.param("fsm/thresh_replan_time", replan_thresh_, 1.0);
                 nh.param("fsm/fail_safe", enable_fail_safe_, true);
                 obstacle_num_ = 0;
+                intercept_pt_ = 9999*Eigen::Vector3d::Ones();
+
                 have_trigger_ = !flag_realworld_experiment_;
 
                 nh.param("fsm/waypoint_num", waypoint_num_,-1);
@@ -60,6 +62,7 @@ namespace oaguider{
 
                 bspline_pub_ = nh.advertise<drone_trajs::Bspline>("/guider/bspline", 10);
                 data_disp_pub_ = nh.advertise<drone_trajs::DataDisp>("/guider/data_display", 100);
+                destroyed_pub_ = nh.advertise<std_msgs::Bool>("/destroy_state", 10);
 
 
 
@@ -109,7 +112,7 @@ namespace oaguider{
                 start_vel = odom_vel_;
 
 
-                Eigen::Vector3d intercept_pt_ = calculateInterceptPoint(start_pos, start_vel, end_pt_, end_vel_);
+                intercept_pt_ = calculateInterceptPoint(start_pos, start_vel, end_pt_, end_vel_);
                 ROS_WARN("position: %f,%f, %f, || %f, %f, %f",start_pos[0], start_pos[1], start_pos[2], end_pt_[0], end_pt_[1], end_pt_[2]);
                 ROS_WARN("velocity: %f,%f, %f, || %f, %f, %f",start_vel[0], start_vel[1], start_vel[2], end_vel_[0], end_vel_[1], end_vel_[2]);
 
@@ -120,6 +123,9 @@ namespace oaguider{
                 ROS_WARN("intercept_pt_: %f,%f, %f, || %f, %f, %f",intercept_pt_[0], intercept_pt_[1], intercept_pt_[2], old_intercept_pt_[0], old_intercept_pt_[1], old_intercept_pt_[2]);
                 if((start_pos - intercept_pt_).norm()<1.0){
                         changeFSMExecState(WAIT_TARGET, "TRIG");
+                        destroy_state.data = true; // 初始化为true 
+                        destroyed_pub_.publish(destroy_state);
+                        
                 }
                 
                 if( (intercept_pt_ - old_intercept_pt_).norm()<1.5 )// if the intercept point not changed;
@@ -138,7 +144,7 @@ namespace oaguider{
 
                         //ROS_INFO("Guide trajectory %s", success ? "true" : "false");
                 }
-                
+
                 if(success){
                         old_intercept_pt_ = intercept_pt_;
                 }
@@ -166,7 +172,7 @@ namespace oaguider{
                                         ros::Duration(0.001).sleep();
                                 }
 
-                                changeFSMExecState(REPLAN_TRAJ, "TRIG");
+                                changeFSMExecState(REGUIDE, "TRIG");
                         }
                         visualization_->displayDroneTraj(global_traj, 0.1, 0);
                 }else{
@@ -246,17 +252,17 @@ namespace oaguider{
                                                 else if ((end_pt_ - pos).norm() > no_replan_thresh_ && t_cur > replan_thresh_)
                                                 {
                                                         ROS_WARN("TUNNEL 1!");
-                                                        changeFSMExecState(REPLAN_TRAJ, "FSM");
+                                                        changeFSMExecState(REGUIDE, "FSM");
                                                 }
                                 }else if( t_cur > replan_thresh_ ){     
                                         ROS_WARN("TUNNEL 2! %f",replan_thresh_);
 
-                                        changeFSMExecState(REPLAN_TRAJ, "FSM");
+                                        changeFSMExecState(REGUIDE, "FSM");
                                 }
 
                                 break;
                         }
-                        case REPLAN_TRAJ:{
+                        case REGUIDE:{
                                 if (GuideFromCurrentTraj(1))
                                 {
                                         changeFSMExecState(EXEC_TRAJ, "FSM");
@@ -264,7 +270,7 @@ namespace oaguider{
                                 else
                                 {
                                          ROS_WARN("TUNNEL 4! %f",replan_thresh_);
-                                        changeFSMExecState(REPLAN_TRAJ, "FSM");
+                                        changeFSMExecState(REGUIDE, "FSM");
                                 }
                                 break;
                         }
@@ -293,6 +299,7 @@ namespace oaguider{
 
         //3
         bool OagFSM::GuideFromGlobalTraj(const int trial_times){
+                ROS_WARN("GuideFromGlobalTraj!");
 
                 start_pt_ = odom_pos_;
                 start_pt_ = odom_vel_;
@@ -311,6 +318,7 @@ namespace oaguider{
 
         //4
         bool OagFSM::GuideFromCurrentTraj(const int trial_times){
+                ROS_WARN("GuideFromCurrentTraj!");
 
                 LocalTrajData *info = &guider_manager_->local_data_;
                 ros::Time time_now = ros::Time::now();
@@ -342,6 +350,7 @@ namespace oaguider{
 
         //5
         void OagFSM::getLocalTarget(){
+                ROS_WARN("getLocalTarget!");
                 double t = 0.0;
                 double t_step = guide_horizon_ /20 /guider_manager_ -> gp_.maxVel_;
                 //cout<<"guide_horizon_:"<<guide_horizon_<<endl;
@@ -364,32 +373,35 @@ namespace oaguider{
                                 local_target_pt_ = pos_t;
                                 guider_manager_->local_esti_duration_ = t;
                                 guider_manager_  -> global_data_.last_progress_time_ = dist_min_t;
+                                ROS_WARN("local_target_pt_1: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
 
                                 break;
                         }
                 }
 
-
+                ROS_WARN("t > guider_manager_->global_data_.global_duration_: %f",guider_manager_->global_data_.global_duration_);
                 if(t > guider_manager_->global_data_.global_duration_){
-                        local_target_pt_ = end_pt_;
+                        ROS_WARN("t > guider_manager_->global_data_.global_duration_");
+                        local_target_pt_ = intercept_pt_;
+                        ROS_WARN("local_target_pt_2: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
                         guider_manager_->local_esti_duration_ = t;
 
                         guider_manager_ -> global_data_.last_progress_time_ = guider_manager_ -> global_data_.global_duration_;
                 }
 
-
                 //cout<<"guider_manager_->gp_.maxVel_ :"<<guider_manager_->gp_.maxVel_ <<"   "<<"guider_manager_->gp_.maxAcc_:"<<guider_manager_->gp_.maxAcc_<<endl;
-                if((end_pt_ - local_target_pt_).norm() < (guider_manager_->gp_.maxVel_ * guider_manager_ -> gp_.maxVel_) / (2*guider_manager_->gp_.maxAcc_) ){
+                if((intercept_pt_ - local_target_pt_).norm() < (guider_manager_->gp_.maxVel_ * guider_manager_ -> gp_.maxVel_) / (2*guider_manager_->gp_.maxAcc_) ){
                         //ROS_WARN("getLocalTarget____1");
                         local_target_vel_ = Eigen::Vector3d::Zero();
+                        ROS_WARN("local_target_vel_1: %f, %f, %f", local_target_vel_(0),local_target_vel_(1),local_target_vel_(2));
                 }else {
                         //ROS_WARN("getLocalTarget____2");
                         local_target_vel_ = guider_manager_ -> global_data_.getVelocity(t);
 
-                        ROS_WARN("local_target_vel_: %f, %f, %f", local_target_vel_(0),local_target_vel_(1),local_target_vel_(2));
+                        ROS_WARN("local_target_vel_2: %f, %f, %f", local_target_vel_(0),local_target_vel_(1),local_target_vel_(2));
                 }
 
-
+                ROS_WARN("local_target_pt_3: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
         }
 
         //6
@@ -433,8 +445,6 @@ namespace oaguider{
                         bspline.knots.push_back(knots(i));
                 }
         
-
-
                 //ROS_WARN("bspline size %d", bspline.pos_pts.size());
                 bspline_pub_.publish(bspline);
                 /* 2. publish traj for visualization */
@@ -487,7 +497,7 @@ namespace oaguider{
                 else
                 continously_called_times_ = 1;
 
-                static string state_str[7] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REPLAN_TRAJ", "EXEC_TRAJ", "EMERGENCY_STOP"};
+                static string state_str[7] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REGUIDE", "EXEC_TRAJ", "EMERGENCY_STOP"};
                 int pre_s = int(exec_state_);
                 exec_state_ = new_state;
                 cout << "[" + pos_call + "]: from " + state_str[pre_s] + " to " + state_str[int(new_state)] << endl;
@@ -501,9 +511,9 @@ namespace oaguider{
 
         void OagFSM::printFSMExecState()
         {
-        static string state_str[7] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REPLAN_TRAJ", "EXEC_TRAJ", "EMERGENCY_STOP"};
+                static string state_str[7] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REGUIDE", "EXEC_TRAJ", "EMERGENCY_STOP"};
 
-        cout << "[FSM]: state: " + state_str[int(exec_state_)] << endl;
+                cout << "[FSM]: state: " + state_str[int(exec_state_)] << endl;
         }
 
 

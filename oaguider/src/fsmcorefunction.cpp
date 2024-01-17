@@ -32,7 +32,7 @@ void planNextWaypoint(const Eigen::Vector3d next_wp)
           ros::spinOnce();
           ros::Duration(0.001).sleep();
         }
-        changeFSMExecState(REPLAN_TRAJ, "TRIG");
+        changeFSMExecState(REGUIDE, "TRIG");
       }
 
       // visualization_->displayGoalPoint(end_pt_, Eigen::Vector4d(1, 0, 0, 1), 0.3, 0);
@@ -99,7 +99,7 @@ void planNextWaypoint(const Eigen::Vector3d next_wp)
       break;
     }
 
-    case REPLAN_TRAJ:
+    case REGUIDE:
     {
 
       if (planFromCurrentTraj(1))
@@ -108,7 +108,7 @@ void planNextWaypoint(const Eigen::Vector3d next_wp)
       }
       else
       {
-        changeFSMExecState(REPLAN_TRAJ, "FSM");
+        changeFSMExecState(REGUIDE, "FSM");
       }
 
       break;
@@ -145,13 +145,13 @@ void planNextWaypoint(const Eigen::Vector3d next_wp)
         else if ((end_pt_ - pos).norm() > no_replan_thresh_ && t_cur > replan_thresh_)
         {
           ROS_WARN("TUNNEL 1!");
-          changeFSMExecState(REPLAN_TRAJ, "FSM");
+          changeFSMExecState(REGUIDE, "FSM");
         }
       }
       else if (t_cur > replan_thresh_)
       {
         ROS_WARN("TUNNEL 2!");
-        changeFSMExecState(REPLAN_TRAJ, "FSM");
+        changeFSMExecState(REGUIDE, "FSM");
       }
 
       break;
