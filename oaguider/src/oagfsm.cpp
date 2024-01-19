@@ -3,6 +3,74 @@
 namespace oaguider{
 
 
+        //    function 0:
+        void OagFSM::init(ros::NodeHandle &nh){
+
+                exec_state_ = FSM_STATE::INIT;
+                have_target_ = false; 
+                have_odom_ = false;
+                use_wpts_ = false;
+
+                nh.param("fsm/realworld_experimemt", flag_realworld_experiment_,false);
+                nh.param("fsm/guide_horizon", guide_horizon_, 6.5);
+                nh.param("fsm/thresh_no_replan_meter", no_replan_thresh_, 1.0);
+                nh.param("fsm/thresh_replan_time", replan_thresh_, 1.0);
+                nh.param("fsm/fail_safe", enable_fail_safe_, true);
+
+                obstacle_num_ = 0;
+                intercept_pt_ = 9999*Eigen::Vector3d::Ones();
+
+                have_trigger_ = !flag_realworld_experiment_;
+
+                visualization_.reset(new OAGVisualization(nh , obstacle_num_));
+                guider_manager_.reset(new OAGManager);
+                guider_manager_->initGuiderModules(nh, visualization_);
+                guider_manager_->deliverTrajToOptimizer();
+
+                /*callback*/
+                exec_timer_ = nh.createTimer(ros::Duration(0.01), &OagFSM::execFsmCbk, this);
+                odom_sub_ = nh.subscribe("/odom_world", 1, &OagFSM::odomCbk, this);
+                waypoint_sub_ = nh.subscribe("/target2_pred", 1, &OagFSM::targetCallback, this);
+
+                bspline_pub_ = nh.advertise<drone_trajs::Bspline>("/guider/bspline", 10);
+                data_disp_pub_ = nh.advertise<drone_trajs::DataDisp>("/guider/data_display", 100);
+                destroyed_pub_ = nh.advertise<std_msgs::Bool>("/destroy_state", 10);
+                
+                ROS_INFO("Wait for 1 second.");
+                int count = 0;
+                old_intercept_pt_ << 9999.0, 9999.0, 9999.0 ;
+
+                while (ros::ok() && count++ < 1000)
+                {
+                        ros::spinOnce();
+                        ros::Duration(0.001).sleep();
+                }
+
+
+                while(ros::ok() && (!have_odom_ || !have_trigger_)){
+                        ros::spinOnce();
+                        ros::Duration(0.001).sleep();
+                }
+                      
+        }
+
+        //    function 1:
+        void OagFSM::targetCallback(const nav_msgs::OdometryConstPtr &msg){
+                //ROS_INFO("targetCallback().");
+                if (msg->pose.pose.position.z < -0.1)
+                        return;
+
+                init_pt_ = odom_pos_;
+                //Eigen::Vector3d object_pt(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
+                end_pt_ = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
+                end_vel_ = Eigen::Vector3d(msg->twist.twist.linear.x, msg->twist.twist.linear.y, msg->twist.twist.linear.z);
+                // end_pt_ = Eigen::Vector3d(0.0, 0.0,1.0);
+                // end_vel_ = Eigen::Vector3d(0.2, 0.3,1.0);
+                //calculateInterceptPoint(object_pt, intercept_pt_);
+                planNextWaypoint();
+        }
+
+        //    function 2:
         void OagFSM::odomCbk(const nav_msgs::OdometryConstPtr &msg){
                 //ROS_INFO("odomCbk().");
                 odom_pos_(0) = msg->pose.pose.position.x;
@@ -23,88 +91,8 @@ namespace oaguider{
                 have_odom_ = true;
         }
 
-        void OagFSM::init(ros::NodeHandle &nh){
-                current_wp_ = 0;
-                exec_state_ = FSM_STATE::INIT;
-                have_target_ = false; 
-                have_odom_ = false;
-                use_wpts_ = false;
 
-                nh.param("fsm/flight_type", target_type_, -1);
-                nh.param("fsm/emergency_time", emergency_time_, -1.0);
-                nh.param("fsm/realworld_experimemt", flag_realworld_experiment_,false);
-                nh.param("fsm/guide_horizon", guide_horizon_, 6.5);
-                nh.param("fsm/thresh_no_replan_meter", no_replan_thresh_, 1.0);
-                nh.param("fsm/thresh_replan_time", replan_thresh_, 1.0);
-                nh.param("fsm/fail_safe", enable_fail_safe_, true);
-                obstacle_num_ = 0;
-                intercept_pt_ = 9999*Eigen::Vector3d::Ones();
-
-                have_trigger_ = !flag_realworld_experiment_;
-
-                nh.param("fsm/waypoint_num", waypoint_num_,-1);
-                for(int i = 0; i < waypoint_num_; i++){
-                        nh.param("fsm/waypoint" + to_string(i) + "_x", waypoints_[i][0], -1.0);
-                        nh.param("fsm/waypoint" + to_string(i) + "_y", waypoints_[i][1], -1.0);
-                        nh.param("fsm/waypoint" + to_string(i) + "_z", waypoints_[i][2], -1.0);
-                }
-
-                visualization_.reset(new OAGVisualization(nh , obstacle_num_));
-                guider_manager_.reset(new OAGManager);
-                guider_manager_->initGuiderModules(nh, visualization_);
-                guider_manager_->deliverTrajToOptimizer();
-
-                /*callback*/
-                exec_timer_ = nh.createTimer(ros::Duration(0.01), &OagFSM::execFsmCbk, this);
-                //safety_timer_ = nh.createTimer(ros::Duration(0.05), &OagFSM::checkCollisionCbk, this);
-
-                odom_sub_ = nh.subscribe("/odom_world", 1, &OagFSM::odomCbk, this);
-
-                bspline_pub_ = nh.advertise<drone_trajs::Bspline>("/guider/bspline", 10);
-                data_disp_pub_ = nh.advertise<drone_trajs::DataDisp>("/guider/data_display", 100);
-                destroyed_pub_ = nh.advertise<std_msgs::Bool>("/destroy_state", 10);
-
-
-
-                //target_timer_ = nh.createTimer(ros::Duration(0.2), &OagFSM::targetCallback, this);
-                waypoint_sub_ = nh.subscribe("/target2_pred", 1, &OagFSM::targetCallback, this);
-                ROS_INFO("Wait for 1 second.");
-                int count = 0;
-                old_intercept_pt_ << 9999.0, 9999.0, 9999.0  ;
-
-
-
-                while (ros::ok() && count++ < 1000)
-                {
-                        ros::spinOnce();
-                        ros::Duration(0.001).sleep();
-                }
-
-
-                while(ros::ok() && (!have_odom_ || !have_trigger_)){
-                        ros::spinOnce();
-                        ros::Duration(0.001).sleep();
-                }
-                      
-        }
-
-        //0
-        void OagFSM::targetCallback(const nav_msgs::OdometryConstPtr &msg){
-                //ROS_INFO("targetCallback().");
-                if (msg->pose.pose.position.z < -0.1)
-                        return;
-
-                init_pt_ = odom_pos_;
-                //Eigen::Vector3d object_pt(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
-                end_pt_ = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
-                end_vel_ = Eigen::Vector3d(msg->twist.twist.linear.x, msg->twist.twist.linear.y, msg->twist.twist.linear.z);
-                // end_pt_ = Eigen::Vector3d(0.0, 0.0,1.0);
-                // end_vel_ = Eigen::Vector3d(0.2, 0.3,1.0);
-                //calculateInterceptPoint(object_pt, intercept_pt_);
-                planNextWaypoint();
-        }
-
-        //1
+        //   function 4:
         void OagFSM::planNextWaypoint(){
                 bool success = false;
                 Eigen::Vector3d start_pos, start_vel, start_acc, end_acc;
@@ -181,7 +169,7 @@ namespace oaguider{
                 }
         }
 
-        //2
+        //   function 5:
         void OagFSM::execFsmCbk(const ros::TimerEvent &e){
 
                 //printFSMExecState();
@@ -297,7 +285,7 @@ namespace oaguider{
                 exec_timer_.start();
         }
 
-        //3
+        //   function 6:
         bool OagFSM::GuideFromGlobalTraj(const int trial_times){
                 ROS_WARN("GuideFromGlobalTraj!");
 
@@ -316,7 +304,7 @@ namespace oaguider{
                 return false;
         }
 
-        //4
+        //   function 7:
         bool OagFSM::GuideFromCurrentTraj(const int trial_times){
                 ROS_WARN("GuideFromCurrentTraj!");
 
@@ -348,7 +336,55 @@ namespace oaguider{
                 return true;
         }
 
-        //5
+        //   function 8:
+        bool OagFSM::callReboundReguide(){
+
+                //ROS_WARN("callReboundReguide()");
+
+                getLocalTarget();
+
+                bool plan_and_refine_success =  guider_manager_->reboundReguide(start_pt_, start_vel_, start_acc_, local_target_pt_, local_target_vel_);
+
+        //bool reboundReguide(Eigen::Vector3d start_pt, 
+        //Eigen::Vector3d start_vel, Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,Eigen::Vector3d local_target_vel){
+
+                auto info = &guider_manager_->local_data_;
+                //ROS_INFO("local duration %f",guider_manager_->local_data_.duration_);
+                drone_trajs::Bspline bspline;
+                /* 1. publish traj to traj_server */
+                bspline.order = 3;
+                bspline.start_time = info->start_time_;
+                bspline.traj_id = info->traj_id_;
+                //ROS_WARN("info->traj_id_:%d", info->traj_id_);
+
+                Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
+                bspline.pos_pts.reserve(pos_pts.cols());
+                for (int i = 0; i < pos_pts.cols(); ++i)
+                {
+                        geometry_msgs::Point pt;
+                        pt.x = pos_pts(0, i);
+                        pt.y = pos_pts(1, i);
+                        pt.z = pos_pts(2, i);
+                        bspline.pos_pts.push_back(pt);
+                        //cout<<"******* i:"<<i<<" ******"<<endl;
+                }
+
+                Eigen::VectorXd knots = info->position_traj_.getKnot();
+                // cout << knots.transpose() << endl;
+                bspline.knots.reserve(knots.rows());
+                for (int i = 0; i < knots.rows(); ++i)
+                {
+                        bspline.knots.push_back(knots(i));
+                }
+        
+                //ROS_WARN("bspline size %d", bspline.pos_pts.size());
+                bspline_pub_.publish(bspline);
+                /* 2. publish traj for visualization */
+                visualization_->displayMatrixXdTraj(info->position_traj_.get_control_points(), 0);
+                return true;
+        }
+
+        //   function 9:
         void OagFSM::getLocalTarget(){
                 ROS_WARN("getLocalTarget!");
                 double t = 0.0;
@@ -404,55 +440,9 @@ namespace oaguider{
                 ROS_WARN("local_target_pt_3: %f, %f, %f", local_target_pt_(0),local_target_pt_(1),local_target_pt_(2));
         }
 
-        //6
-        bool OagFSM::callReboundReguide(){
 
-                //ROS_WARN("callReboundReguide()");
 
-                getLocalTarget();
-
-                bool plan_and_refine_success =  guider_manager_->reboundReguide(start_pt_, start_vel_, start_acc_, local_target_pt_, local_target_vel_);
-
-        //bool reboundReguide(Eigen::Vector3d start_pt, 
-        //Eigen::Vector3d start_vel, Eigen::Vector3d start_acc, Eigen::Vector3d local_target_pt,Eigen::Vector3d local_target_vel){
-
-                auto info = &guider_manager_->local_data_;
-                //ROS_INFO("local duration %f",guider_manager_->local_data_.duration_);
-                drone_trajs::Bspline bspline;
-                /* 1. publish traj to traj_server */
-                bspline.order = 3;
-                bspline.start_time = info->start_time_;
-                bspline.traj_id = info->traj_id_;
-                //ROS_WARN("info->traj_id_:%d", info->traj_id_);
-
-                Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
-                bspline.pos_pts.reserve(pos_pts.cols());
-                for (int i = 0; i < pos_pts.cols(); ++i)
-                {
-                        geometry_msgs::Point pt;
-                        pt.x = pos_pts(0, i);
-                        pt.y = pos_pts(1, i);
-                        pt.z = pos_pts(2, i);
-                        bspline.pos_pts.push_back(pt);
-                        //cout<<"******* i:"<<i<<" ******"<<endl;
-                }
-
-                Eigen::VectorXd knots = info->position_traj_.getKnot();
-                // cout << knots.transpose() << endl;
-                bspline.knots.reserve(knots.rows());
-                for (int i = 0; i < knots.rows(); ++i)
-                {
-                        bspline.knots.push_back(knots(i));
-                }
-        
-                //ROS_WARN("bspline size %d", bspline.pos_pts.size());
-                bspline_pub_.publish(bspline);
-                /* 2. publish traj for visualization */
-                visualization_->displayMatrixXdTraj(info->position_traj_.get_control_points(), 0);
-                return true;
-        }
-
-        //7
+        // // function 10:
         Eigen::Vector3d OagFSM::calculateInterceptPoint(Eigen::Vector3d startPt, Eigen::Vector3d startVel, Eigen::Vector3d targetCurrPt, Eigen::Vector3d targetCurVel){
                 States current_drone(startPt,startVel,Eigen::Vector3d::Zero());
                 States current_target(targetCurrPt, targetCurVel, Eigen::Vector3d::Zero());
@@ -478,18 +468,18 @@ namespace oaguider{
 
         }
 
-
+        // // function 11:
         bool OagFSM::callOaguiderTRAJ(const int trial_times){
 
                 return true;
         }
 
-
+        // // function 12:
         void OagFSM::checkCollisionCbk(const ros::TimerEvent &e){
 
         }
 
-
+        // // function 13:
         void OagFSM::changeFSMExecState(FSM_STATE new_state, string pos_call){
 
                 if (new_state == exec_state_)
@@ -503,12 +493,13 @@ namespace oaguider{
                 cout << "[" + pos_call + "]: from " + state_str[pre_s] + " to " + state_str[int(new_state)] << endl;
         }
 
-
+        // // function 14:
         bool OagFSM::callEmergencyStop(Eigen::Vector3d stop_pos)
         {
                 return true;
         }
-
+        
+        // // function 15:
         void OagFSM::printFSMExecState()
         {
                 static string state_str[7] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REGUIDE", "EXEC_TRAJ", "EMERGENCY_STOP"};
