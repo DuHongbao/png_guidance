@@ -56,17 +56,14 @@ namespace oaguider{
 
         //    function 1:
         void OagFSM::targetCallback(const nav_msgs::OdometryConstPtr &msg){
-                //ROS_INFO("targetCallback().");
+                ROS_INFO("targetCallback().");
                 if (msg->pose.pose.position.z < -0.1)
                         return;
 
                 init_pt_ = odom_pos_;
-                //Eigen::Vector3d object_pt(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
                 end_pt_ = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
                 end_vel_ = Eigen::Vector3d(msg->twist.twist.linear.x, msg->twist.twist.linear.y, msg->twist.twist.linear.z);
-                // end_pt_ = Eigen::Vector3d(0.0, 0.0,1.0);
-                // end_vel_ = Eigen::Vector3d(0.2, 0.3,1.0);
-                //calculateInterceptPoint(object_pt, intercept_pt_);
+
                 planNextWaypoint();
         }
 
@@ -81,8 +78,6 @@ namespace oaguider{
                 odom_vel_(1) = msg->twist.twist.linear.y;
                 odom_vel_(2) = msg->twist.twist.linear.z;
 
-                 //odom_acc_ = estimateAcc( msg );
-
                 odom_orient_.w() = msg->pose.pose.orientation.w;
                 odom_orient_.x() = msg->pose.pose.orientation.x;
                 odom_orient_.y() = msg->pose.pose.orientation.y;
@@ -92,7 +87,7 @@ namespace oaguider{
         }
 
 
-        //   function 4:
+        //   function 3:
         void OagFSM::planNextWaypoint(){
                 bool success = false;
                 Eigen::Vector3d start_pos, start_vel, start_acc, end_acc;
@@ -169,7 +164,7 @@ namespace oaguider{
                 }
         }
 
-        //   function 5:
+        //   function 4:
         void OagFSM::execFsmCbk(const ros::TimerEvent &e){
 
                 //printFSMExecState();
