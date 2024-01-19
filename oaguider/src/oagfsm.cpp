@@ -317,6 +317,7 @@ namespace oaguider{
         //   function 7:
         bool OagFSM::GuideFromCurrentTraj(const int trial_times){
                 ROS_WARN("GuideFromCurrentTraj!");
+                guider_manager_ -> force_new_polynomial_ = false;
 
                 LocalTrajData *info = &guider_manager_->local_data_;
                 ros::Time time_now = ros::Time::now();
