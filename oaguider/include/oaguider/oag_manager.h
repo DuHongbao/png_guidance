@@ -41,6 +41,7 @@ class OAGManager{
                 double local_esti_duration_;
                 GlobalTrajData global_data_;
                 GuidanceLaw::Ptr guide_law_;
+                bool force_new_polynomial_;
 
         private:
                 OAGVisualization::Ptr  visualization_;

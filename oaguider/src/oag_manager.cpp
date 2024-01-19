@@ -282,6 +282,7 @@ namespace oaguider{
                 vector<Eigen::Vector3d> point_set, start_end_derivatives;
                 static bool flag_first_call = true, flag_force_polynomial = false;
                 bool flag_regenerate = false;
+                flag_force_polynomial = force_new_polynomial_;
 
                 do 
                 {
@@ -291,6 +292,7 @@ namespace oaguider{
 
                         // Intial path  generated from a min-snap traj by older.
                         if(flag_first_call || flag_force_polynomial){
+                                ROS_INFO("A:Intial path  generated from a min-snap traj by older!");
                                 flag_first_call = false;
                                 flag_force_polynomial = false;
 
@@ -330,7 +332,7 @@ namespace oaguider{
 
                         
                         }else{
-                                // Initial path generated from previous trajectory.
+                                ROS_INFO("B:Initial path generated from previous trajectory.");
                                 double t;
                                 double t_cur = (ros::Time::now() - local_data_.start_time_).toSec();
                                 ROS_WARN("t_cur: %f",t_cur);
@@ -414,13 +416,16 @@ namespace oaguider{
                                         flag_regenerate = true;
                                 }
 
-                                for(int i = 0; i < segment_point.size(); i++){
-                                        //ROS_INFO("segment_point: %f, %f, %f ",point_set[i](0), point_set[i](1), point_set[i](2));
-                                }
+
 
 
                         }
                 }while(flag_regenerate);
+
+                for(int i = 0; i < point_set.size(); i++){
+                        ROS_INFO("segment_point: %f, %f, %f ",point_set[i](0), point_set[i](1), point_set[i](2));
+                }
+
 
 
                 Eigen::MatrixXd ctrl_pts, ctrl_pts_temp;

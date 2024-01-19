@@ -85,7 +85,8 @@ void bsplineCallback(drone_trajs::BsplineConstPtr msg)
 void destroyCallback(const std_msgs::Bool::ConstPtr& msg){
     if (msg->data) { 
         ROS_INFO("Destroied: true");
-        have_destroied = msg->data;  
+        have_destroied = msg->data;
+
     } else { 
         ROS_INFO("Destroied: false");  
     }  
@@ -358,6 +359,7 @@ void cmdCallback(const ros::TimerEvent &e)
 
         last_yaw_ = cmd.yaw;
         if(have_destroied){
+
           // cmd.position.x = 0;
           // cmd.position.y = 0;
           // cmd.position.z = 0;
@@ -369,6 +371,7 @@ void cmdCallback(const ros::TimerEvent &e)
           cmd.acceleration.x = 0;
           cmd.acceleration.y = 0;
           cmd.acceleration.z = 0;
+
         }
 
         pos_cmd_pub.publish(cmd);
@@ -383,10 +386,8 @@ int main(int argc, char **argv)
         ros::Rate loop_rate(loop_rate_hz);
         have_destroied = false;
 
-
         bspline_();
         
-
 
         //ros::Subscriber bspline_sub = nh.subscribe("/drone_0_planning/bspline", 10, bsplineCallback);
 

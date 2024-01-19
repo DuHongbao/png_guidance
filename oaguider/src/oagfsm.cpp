@@ -90,6 +90,7 @@ namespace oaguider{
         //   function 3:
         void OagFSM::planNextWaypoint(){
                 bool success = false;
+
                 Eigen::Vector3d start_pos, start_vel, start_acc, end_acc;
                 start_pos = odom_pos_;
                 start_vel = odom_vel_;
@@ -98,76 +99,97 @@ namespace oaguider{
                 intercept_pt_ = calculateInterceptPoint(start_pos, start_vel, end_pt_, end_vel_);
                 ROS_WARN("position: %f,%f, %f, || %f, %f, %f",start_pos[0], start_pos[1], start_pos[2], end_pt_[0], end_pt_[1], end_pt_[2]);
                 ROS_WARN("velocity: %f,%f, %f, || %f, %f, %f",start_vel[0], start_vel[1], start_vel[2], end_vel_[0], end_vel_[1], end_vel_[2]);
-
-                //ROS_INFO("end_pt_: %f, %f, %f", end_pt_[0],end_pt_(1), end_pt_(2));
-                //ROS_INFO("end_vel_: %f, %f, %f", end_vel_(0),end_vel_(1), end_vel_(2));
-                //ROS_WARN("intercept_pt_: %f, %f, %f", intercept_pt_(0),intercept_pt_(1), intercept_pt_(2));
-
                 ROS_WARN("intercept_pt_: %f,%f, %f, || %f, %f, %f",intercept_pt_[0], intercept_pt_[1], intercept_pt_[2], old_intercept_pt_[0], old_intercept_pt_[1], old_intercept_pt_[2]);
-                if((start_pos - intercept_pt_).norm()<1.0){
+                
+                if((start_pos - intercept_pt_).norm()<0.5){
+                        have_target_ = false; 
+                        have_trigger_ = false;
                         changeFSMExecState(WAIT_TARGET, "TRIG");
+
                         destroy_state.data = true; // 初始化为true 
                         destroyed_pub_.publish(destroy_state);
-                        
-                }
-                
-                if( (intercept_pt_ - old_intercept_pt_).norm()<1.5 )// if the intercept point not changed;
-                {
-                        cout<<"Tunnel1:"<<endl;
-                        success = true;
-                }
-                else{
-                        cout<<"Tunnel2:"<<endl;
-
-                        start_acc = Eigen::Vector3d::Zero();
-
-                        end_acc = Eigen::Vector3d::Zero();
-
-                        success = guider_manager_->guideGlobalTraj(start_pos, start_vel, start_acc, end_pt_, end_vel_, end_acc);
-
-                        //ROS_INFO("Guide trajectory %s", success ? "true" : "false");
-                }
-
-                if(success){
-                        old_intercept_pt_ = intercept_pt_;
-                }
-
-                if(success){
-                        ROS_WARN("Generating global trajectory!");
-                        constexpr double step_size_t = 0.1;
-                        int i_end = floor(guider_manager_->global_data_.global_duration_ / step_size_t);
-                        //cout<<"i_end:"<<i_end<<endl;
-                        vector<Eigen::Vector3d> global_traj(i_end);
-                        for (int i = 0; i < i_end; i++){
-                                global_traj[i] = guider_manager_->global_data_.global_traj_.evaluate(i * step_size_t);
-                                //cout<<"global_traj:"<<global_traj[i]<<endl;
-                        }
-                        
-                        end_vel_.setZero();
-                        have_target_ = true;
-                        have_new_target_ = true;
-
-                        if (exec_state_ == WAIT_TARGET)
-                                changeFSMExecState(GEN_NEW_TRAJ, "TRIG");
-                        else{
-                                while (exec_state_ != EXEC_TRAJ){
-                                        ros::spinOnce();
-                                        ros::Duration(0.001).sleep();
+                        goto force_return;
+                }else{
+                        if( (intercept_pt_ - old_intercept_pt_).norm()<1.5 )// if the intercept point not changed;
+                        {
+                                success = true;
+                                old_intercept_pt_ = intercept_pt_;
+                                ROS_WARN("Generating global trajectory!");
+                                constexpr double step_size_t = 0.1;
+                                int i_end = floor(guider_manager_->global_data_.global_duration_ / step_size_t);
+                                //cout<<"i_end:"<<i_end<<endl;
+                                vector<Eigen::Vector3d> global_traj(i_end);
+                                for (int i = 0; i < i_end; i++){
+                                        global_traj[i] = guider_manager_->global_data_.global_traj_.evaluate(i * step_size_t);
                                 }
+                                 end_vel_.setZero();
+                                have_target_ = true;
+                                if (exec_state_ == WAIT_TARGET)
+                                        changeFSMExecState(GEN_NEW_TRAJ, "TRIG");
+                                else{
+                                        while (exec_state_ != EXEC_TRAJ){
+                                                ros::spinOnce();
+                                                ros::Duration(0.001).sleep();
+                                        }
 
                                 changeFSMExecState(REGUIDE, "TRIG");
+                                }
+                                visualization_->displayDroneTraj(global_traj, 0.1, 0);
+
+                        }else{
+                                old_intercept_pt_ = intercept_pt_;
+                                start_acc = Eigen::Vector3d::Zero();
+                                end_acc = Eigen::Vector3d::Zero();
+                                success = guider_manager_->guideGlobalTraj(start_pos, start_vel, start_acc, end_pt_, end_vel_, end_acc);
+                                ROS_INFO("New Guide Global trajectory %s", success ? "true" : "false");
+                                if(success){
+                                        changeFSMExecState(GEN_NEW_TRAJ, "TRIG");
+
+                                }else{
+                                        changeFSMExecState(WAIT_TARGET, "TRIG");
+                                        //ROS_ERROR("Unable to generate global trajectory!");
+                                }
                         }
-                        visualization_->displayDroneTraj(global_traj, 0.1, 0);
-                }else{
-                        changeFSMExecState(WAIT_TARGET, "TRIG");
-                        //ROS_ERROR("Unable to generate global trajectory!");
                 }
+                
+
+
+                // if(success){
+                //         old_intercept_pt_ = intercept_pt_;
+                //         ROS_WARN("Generating global trajectory!");
+                //         constexpr double step_size_t = 0.1;
+                //         int i_end = floor(guider_manager_->global_data_.global_duration_ / step_size_t);
+                //         //cout<<"i_end:"<<i_end<<endl;
+                //         vector<Eigen::Vector3d> global_traj(i_end);
+                //         for (int i = 0; i < i_end; i++){
+                //                 global_traj[i] = guider_manager_->global_data_.global_traj_.evaluate(i * step_size_t);
+
+                //         }
+                        
+                //         end_vel_.setZero();
+                //         have_target_ = true;
+
+                //         if (exec_state_ == WAIT_TARGET)
+                //                 changeFSMExecState(GEN_NEW_TRAJ, "TRIG");
+                //         else{
+                //                 while (exec_state_ != EXEC_TRAJ){
+                //                         ros::spinOnce();
+                //                         ros::Duration(0.001).sleep();
+                //                 }
+
+                //                 changeFSMExecState(REGUIDE, "TRIG");
+                //         }
+                //         visualization_->displayDroneTraj(global_traj, 0.1, 0);
+                // }else{
+                //         changeFSMExecState(WAIT_TARGET, "TRIG");
+                //         //ROS_ERROR("Unable to generate global trajectory!");
+                // }
+                force_return:;
         }
 
         //   function 4:
         void OagFSM::execFsmCbk(const ros::TimerEvent &e){
 
-                //printFSMExecState();
                 exec_timer_.stop(); // To avoid blockage
                 switch (exec_state_)
                 {
@@ -210,20 +232,15 @@ namespace oaguider{
                                 break;
                         }
                         case EXEC_TRAJ:{
-                                /**/
                                 LocalTrajData *info = &guider_manager_->local_data_;
                                 ros::Time time_now = ros::Time::now();
                                 double t_cur = (time_now - info->start_time_).toSec();
 
                                 t_cur = min(info->duration_, t_cur);
 
-                                //ROS_WARN("EXEC_TRAJ");
-
                                 Eigen::Vector3d pos = info->position_traj_.evaluateDeBoorT(t_cur);
 
-                                //ROS_WARN("pos : %f,%f,%f",pos(0),pos(1),pos(2));
-
-                                if( (local_target_pt_ - intercept_pt_).norm() < 1e-3  ){          // close to the global target        
+                                if( (local_target_pt_ - intercept_pt_).norm() < 0.1  ){          // close to the global target        
                                         if (t_cur > info->duration_ - 1e-2){
                                                 have_target_ = false;
                                                 have_trigger_ = false;
@@ -232,17 +249,15 @@ namespace oaguider{
                                                 goto force_return;
                                                 // return;
                                                 }
-                                                else if ((end_pt_ - pos).norm() > no_replan_thresh_ && t_cur > replan_thresh_)
+                                                else if ((intercept_pt_ - pos).norm() > no_replan_thresh_ && t_cur > replan_thresh_)
                                                 {
                                                         ROS_WARN("TUNNEL 1!");
                                                         changeFSMExecState(REGUIDE, "FSM");
                                                 }
                                 }else if( t_cur > replan_thresh_ ){     
-                                        ROS_WARN("TUNNEL 2! %f",replan_thresh_);
-
+                                        ROS_WARN("TUNNEL 2! %f", replan_thresh_);
                                         changeFSMExecState(REGUIDE, "FSM");
                                 }
-
                                 break;
                         }
                         case REGUIDE:{
@@ -283,7 +298,7 @@ namespace oaguider{
         //   function 6:
         bool OagFSM::GuideFromGlobalTraj(const int trial_times){
                 ROS_WARN("GuideFromGlobalTraj!");
-
+                guider_manager_ -> force_new_polynomial_ = true;
                 start_pt_ = odom_pos_;
                 start_vel_ = odom_vel_;
                 start_acc_.setZero();

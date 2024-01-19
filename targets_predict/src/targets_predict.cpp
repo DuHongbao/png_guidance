@@ -47,7 +47,7 @@ int main(int argc, char **argv)
         ros::init(argc, argv, "targets_predict");
         // ros::NodeHandle node;
         ros::NodeHandle nh("~");
-        ros::Rate loop_rate(1);
+        ros::Rate loop_rate(0.9);
 
 
         pre_target_pub = nh.advertise<nav_msgs::Odometry>("/target2_pred", 1);      
