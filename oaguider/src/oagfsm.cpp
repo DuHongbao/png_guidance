@@ -210,7 +210,7 @@ namespace oaguider{
                         }
                         case GEN_NEW_TRAJ:{
                                 start_pt_ = odom_pos_;
-                                start_pt_ = odom_vel_;
+                                start_vel_ = odom_vel_;
                                 start_acc_.setZero();
                                 Eigen::Vector3d rot_x = odom_orient_.toRotationMatrix().block(0, 0, 3, 1);
                                 start_yaw_(0) = atan2(rot_x(1), rot_x(0));
@@ -302,7 +302,7 @@ namespace oaguider{
                 ROS_WARN("GuideFromGlobalTraj!");
 
                 start_pt_ = odom_pos_;
-                start_pt_ = odom_vel_;
+                start_vel_ = odom_vel_;
                 start_acc_.setZero();
 
                 for (int i = 0; i < trial_times; i++){
