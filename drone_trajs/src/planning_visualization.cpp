@@ -1,4 +1,4 @@
-#include "planning_visualization.h"
+#include <drone_trajs/planning_visualization.h>
 
 using std::cout;
 using std::endl;

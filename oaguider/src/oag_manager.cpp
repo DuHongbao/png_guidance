@@ -359,7 +359,7 @@ namespace oaguider{
                                                         local_data_.acceleration_traj_.evaluateDeBoorT(t),
                                                         local_target_pt, local_target_vel, Eigen::Vector3d::Zero(), poly_time);
                                         cout<<"222Length:"<<gl_traj.getTimeSum() <<endl;
-                                        cout<<"222Vel:"<<gl_traj.getMeanVel()<<endl;
+                                        cout<<"222Vel:";//<<gl_traj.getMeanVel()<<endl;
 
                                         for(t = ts; t < poly_time; t += ts){
                                                 if (!pseudo_arc_length.empty())
